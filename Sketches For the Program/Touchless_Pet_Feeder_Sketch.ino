@@ -1,9 +1,8 @@
-#include <Ds1302.h>
-
 /*  Touchless Pet Feeder  */
 
 
 // Headers to allow use of Wire and RTClib Libraries
+#include <Arduino.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <Wire.h> // used for I2C communication with the RTC module
@@ -14,7 +13,15 @@
 #include <SoftwareSerial.h>
 #include <HardwareSerial.h>
 #include <HardwareSerial_private.h>
-//#include <Serial.h> //not working for some reason
+#include <ATtinySerialOut.hpp>
+
+
+
+// software serial #1: RX = digital pin 0, TX = digital pin 1
+SoftwareSerial portOne(0,1);
+
+// software serial #2: RX = digital pin 7, TX = digital pin 8
+SoftwareSerial portTwo(7,8);
 
 
 // Essential Variables
@@ -24,19 +31,22 @@ int CTime = 0; //TENTATIVE- Current time / Last identified "Time"
 int ATime = 0; // Time checker for adult / senior
 int PTime = 0; // Time checker for puppy
 int Timer = 0; // For dispense interval (The pause before next dispense)
+int TimerDuration = 10;
+int TCounter = 0;
 //unsigned long DateTime = 0;
 
 int PuppyMax = 3; //TENTATIVE-- Change the value to average number of dispense to complete the enough amount of meal for the daytime
 int AdultMax = 5; //TENTATIVE-- Change the value to average number of dispense to complete the enough amount of meal for the daytime
 bool Adult = true; //TENTATIVE-- Switch for dog age (false=Puppy ; true=Adult/Senior)
+String DayTime = "";
 
 
 // Pin Variables
 const int DispensePin = 2;
-const int DS1302_CLK = 3;
+const int PIN_CLK = 3;
 const int AgePin = 4;
-const int DS1302_DAT = 5;
-const int DS1302_RST = 6;
+const int PIN_DAT = 5;
+const int PIN_ENA = 6;
 const int DogPin = 7;
 const int HumanPin = 8;
 const int DispMaxed = 9;
@@ -44,10 +54,24 @@ const int AdultSignalPin = 11;
 const int PowerPin = 12; 
 const int DispSignal = 13;
 
-Ds1302 rtc(DS1302_RST, DS1302_DAT, DS1302_CLK); // this one actually works. noice
+Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+const static char* WeekDays[] =
+{
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+};
 
 void setup() {
   // This shit runs once fr fr
+
+Serial.begin(9600);
 
 pinMode (DispensePin, OUTPUT);
 pinMode (AgePin, INPUT);
@@ -58,95 +82,100 @@ pinMode (PowerPin, OUTPUT);
 pinMode (AdultSignalPin, OUTPUT);
 pinMode (DispMaxed, OUTPUT);
 
+lcd.begin(16, 2);
+rtc.init();
+
+
+
 
 // test if clock is halted and set a date-time (see example 2) to start it
     if (rtc.isHalted())
     {
-        //Serial.println("RTC is halted. Setting time...");
+        Serial.println("RTC is halted. Setting time...");
+
         Ds1302::DateTime dt = {
             .year = 23,
             .month = Ds1302::MONTH_APR,
             .day = 29,
-            .hour = 3,
-            .minute = 50,
+            .hour = 20,
+            .minute = 24,
             .second = 59,
             .dow = Ds1302::DOW_SAT
         };
+
         rtc.setDateTime(&dt);
     }
+
+
 }
 
 
 void loop() {
   // This shit runs over and over and over again no cap
 
-
 Ds1302::DateTime now;
 rtc.getDateTime(&now);
-//static uint8_t last_second = 0;
+static uint8_t last_second = 0;
+
+
+if (TCounter != now.second)
+  {
+    TCounter = now.second;
+    Timer--;
+  }
+
 
 if (Adult == true)
 {
-  if (6 < now.hour < 12)
-    digitalWrite(ATime, 0);
-  else if (11 < now.hour < 19)
-    digitalWrite(ATime, 1);
-  else if (18 < now.hour < 0)
-    digitalWrite(ATime, 2);
-  else if (11 < now.hour < 7)
-    digitalWrite(ATime, 3);
+  if (now.hour >= 7 && now.hour < 12)
+    {
+      ATime = 0;
+      DayTime = "Morning, Doggo";
+    }
+  else if (now.hour >= 12 && now.hour < 19)
+    {
+      ATime = 1;
+      DayTime = "Lunch Time, Doggo";
+    }
+  else if (now.hour >= 19)
+    {
+      ATime = 2;
+      DayTime = "Evening, Doggo";
+    }
+  else if (now.hour >= 0 && now.hour < 7)
+    {
+      ATime = 3;
+      DayTime = "Midnight, Doggo";
+    }
 }
 else
 {
-  if (6 < now.hour < 11)
-    digitalWrite(PTime, 0);
-  else if (10 < now.hour < 14)
-    digitalWrite(PTime, 1);
-  else if (14 < now.hour < 19)
-    digitalWrite(PTime, 2);
-  else if (18 < now.hour < 0)
-    digitalWrite(PTime, 3);
-  else if (11 < now.hour < 7)
-    digitalWrite(PTime, 4);
-}
-
-
-// get the current time
-    /*
-    serial.begin(9600);
-    Ds1302::DateTime now;
-    rtc.getDateTime(&now);
-
-    static uint8_t last_second = 0;
-    if (last_second != now.second)
+  if (now.hour >= 7 && now.hour < 11)
     {
-        last_second = now.second;
-
-        Serial.print("20");
-        Serial.print(now.year);    // 00-99
-        Serial.print('-');
-        if (now.month < 10) Serial.print('0');
-        Serial.print(now.month);   // 01-12
-        Serial.print('-');
-        if (now.day < 10) Serial.print('0');
-        Serial.print(now.day);     // 01-31
-        Serial.print(' ');
-        Serial.print(WeekDays[now.dow - 1]); // 1-7
-        Serial.print(' ');
-        if (now.hour < 10) Serial.print('0');
-        Serial.print(now.hour);    // 00-23
-        Serial.print(':');
-        if (now.minute < 10) Serial.print('0');
-        Serial.print(now.minute);  // 00-59
-        Serial.print(':');
-        if (now.second < 10) Serial.print('0');
-        Serial.print(now.second);  // 00-59
-        Serial.println();
+      PTime = 0;
+      DayTime = "Early Morning, Puppy";
     }
-
-    delay(100);
-*/
-
+  else if (now.hour >= 11 && now.hour < 15)
+    {
+      PTime = 1;
+      DayTime = "Late Morning, Puppy";
+    }
+  else if (now.hour >= 15 && now.hour < 19)
+    {
+      PTime = 2;
+      DayTime = "Lunch Time, Puppy";
+    }
+  else if (now.hour >= 19)
+    {
+      PTime = 3;
+      DayTime = "Evening, Puppy";
+    }
+  else if (now.hour >= 0 && now.hour < 7)
+    {
+      PTime = 4;
+      DayTime = "Midnight, Puppy";
+    }
+}
 
 
 
@@ -166,6 +195,15 @@ if (digitalRead(HumanPin) == 1)
   delay(1000);
   digitalWrite(DispSignal, LOW);
   delay(300);
+  Serial.println("Human Sensed");
+  lcd.setCursor(0, 0);
+  Serial.print(now.hour);
+  Serial.print(':');
+  Serial.print(now.minute);
+  Serial.print(':');
+  Serial.print(now.second);
+  Serial.print(" - " + ATime);
+  Serial.println(" - " + DayTime);
   DispCount++;
   // (Add Command) Set command to close dispenser via servo motor
 
@@ -219,6 +257,8 @@ if (digitalRead(DogPin) == 1)
               digitalWrite (DispMaxed, LOW);
             
             delay(300);
+
+            Timer = TimerDuration;
         }
       }
     }
@@ -243,6 +283,7 @@ if (digitalRead(DogPin) == 1)
             // (Add Command) Set command to close dispenser via servo motor
             DispCount++;
             // (Add Command) Set new Timer via RTC Module  
+            Timer = TimerDuration;
 
             if (DispCount >= PuppyMax)
               digitalWrite(DispMaxed, HIGH);
