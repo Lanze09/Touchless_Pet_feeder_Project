@@ -1,8 +1,9 @@
 /* ------------------------------- Touchless Pet Feeder ------------------------------- */
 
-// Sketch uses 16326 bytes (50%) of program storage space. Maximum is 32256 bytes.
-// Global variables use 1641 bytes (80%) of dynamic memory, leaving 407 bytes for local variables. Maximum is 2048 bytes.
-  
+//Sketch uses 16366 bytes (50%) of program storage space. Maximum is 32256 bytes.
+//Global variables use 1641 bytes (80%) of dynamic memory, leaving 407 bytes for local variables. Maximum is 2048 bytes.  
+
+
   #include <Arduino.h>
   #include <stdlib.h>
   #include <stdio.h>
@@ -38,7 +39,7 @@
   //unsigned long DateTime = 0;
 
   //TENTATIVE VALUES
-  int TimerDuration = 2; // timer Duration per minute
+  int TimerDuration = 1; // timer Duration per minute
   int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
@@ -54,7 +55,7 @@
   const int PIN_ENA = 6;
   const int SwitchPin = 7;
 
-  const int DispMaxed = 9;
+  const int DogAvail = 9;
   const int AdultSignalPin = 11;
   const int PowerPin = 12; 
   const int DispSignal = 13;
@@ -89,7 +90,7 @@
   pinMode (DispSignal, OUTPUT);
   pinMode (PowerPin, OUTPUT);
   pinMode (AdultSignalPin, OUTPUT);
-  pinMode (DispMaxed, OUTPUT);
+  pinMode (DogAvail, OUTPUT);
 
 
   rtc.init(); //Initialize RTC
@@ -155,17 +156,17 @@
   lcd.print("for CMPE30252");
   delay(3000);
 
-  digitalWrite(DispMaxed, HIGH);
+  digitalWrite(DispSignal, LOW);
   delay(200);
-  digitalWrite(DispMaxed, LOW);
+  digitalWrite(DispSignal, HIGH);
   delay(100);
-  digitalWrite(DispMaxed, HIGH);
+  digitalWrite(DispSignal, LOW);
   delay(200);
-  digitalWrite(DispMaxed, LOW);
+  digitalWrite(DispSignal, HIGH);
   delay(100);
-  digitalWrite(DispMaxed, HIGH);
+  digitalWrite(DispSignal, LOW);
   delay(200);
-  digitalWrite(DispMaxed, LOW);
+  digitalWrite(DispSignal, HIGH);
   delay(100);
 
   }
@@ -332,36 +333,24 @@
     Seconddd = String(now.second);
 
 
-  //Will disable dog sensor if midnight
-  if (ATime == 3 || PTime == 4)
-    {
-      DispCount = 10;
-      digitalWrite(DispMaxed, HIGH);
-    }
-    
-
-
-
-
-
     // To ping if maximum dispense has been reached
     if (Adult == true)
     {
       if (DispCount >= AdultMax)
         {
-          digitalWrite (DispMaxed, HIGH);
+          digitalWrite (DogAvail, LOW);
         }
       else
-        digitalWrite (DispMaxed, LOW);
+        digitalWrite (DogAvail, HIGH);
     }
     else
     {
       if (DispCount >= PuppyMax)
         {
-          digitalWrite (DispMaxed, HIGH);
+          digitalWrite (DogAvail, LOW);
         }
       else
-        digitalWrite (DispMaxed, LOW);
+        digitalWrite (DogAvail, HIGH);
     }
 
       // Reset if Daytime changes
@@ -371,7 +360,7 @@
         {
           CTime = ATime;
           DispCount = 0;
-          digitalWrite (DispMaxed, LOW);
+          digitalWrite (DogAvail, HIGH);
         }
       }
       else
@@ -380,7 +369,7 @@
         {
           CTime = PTime;
           DispCount = 0;
-          digitalWrite (DispMaxed, LOW);
+          digitalWrite (DogAvail, LOW);
 
             lcd.clear();
             lcd.setCursor(0,0);
@@ -396,22 +385,47 @@
             lcd.print("for CMPE30252");
             delay(3000);
 
-            digitalWrite(DispMaxed, HIGH);
+            digitalWrite(DispSignal, HIGH);
             delay(200);
-            digitalWrite(DispMaxed, LOW);
+            digitalWrite(DispSignal, LOW);
             delay(100);
-            digitalWrite(DispMaxed, HIGH);
+            digitalWrite(DispSignal, HIGH);
             delay(200);
-            digitalWrite(DispMaxed, LOW);
+            digitalWrite(DispSignal, LOW);
             delay(100);
-            digitalWrite(DispMaxed, HIGH);
+            digitalWrite(DispSignal, HIGH);
             delay(200);
-            digitalWrite(DispMaxed, LOW);
+            digitalWrite(DispSignal, LOW);
             delay(100);
 
         }
       }
 
+
+    // setting of the DogAvail LED
+    if (Timer <= 0)
+    {
+      if (Adult == true)
+      {
+        if (DispCount < AdultMax)
+        {
+          if (ATime != 3)
+            digitalWrite(DogAvail, HIGH);
+        }
+      }
+      else
+      {
+        if (DispCount < PuppyMax)
+        {
+          if (PTime != 4)
+            digitalWrite(DogAvail, HIGH);
+        }
+      }
+    }
+    else
+    {
+      digitalWrite(DogAvail, LOW);
+    }
 
 
 
@@ -420,10 +434,14 @@
     {
       TCounter = now.minute;
       Timer--;
-      if (Timer < 0)
+      if (Timer <= 0)
       {
-        Timer = 0;
-      }   
+        digitalWrite(DogAvail, LOW);
+        if (Timer < 0)
+          Timer = 0;
+      }
+      
+
     
       //For Serial Display per minute
       for(i = 0; i < 50; i++) {
@@ -451,7 +469,7 @@
           {
             lcd.print("0 ");
             Serial.print("Remaining for Dog: 0");
-            digitalWrite(DispMaxed, HIGH);
+            digitalWrite(DogAvail, LOW);
           }
       }
       else
@@ -467,7 +485,7 @@
           {
             Serial.print("Remaining for Puppy: 0");
             lcd.print("0 ");
-            digitalWrite(DispMaxed, HIGH);
+            digitalWrite(DogAvail, LOW);
           }     
       }
       Serial.println(" | " + WillReset);
@@ -502,7 +520,7 @@
         {
           CTime = ATime;
           DispCount = 0;
-          digitalWrite (DispMaxed, LOW);
+          digitalWrite (DogAvail, HIGH);
         }
       }
       else
@@ -511,7 +529,7 @@
         {
           CTime = PTime;
           DispCount = 0;
-          digitalWrite (DispMaxed, LOW);
+          digitalWrite (DogAvail, HIGH);
         }
       }
 
@@ -523,7 +541,7 @@
       lcd.print("Dispenses Food!");                    
       delay(1000);
 
-      //For Serial Display
+      //For Serial Display 
       for(int i = 0; i < 50; i++) {
         Serial.println();}
       Serial.println("--------HUMAN DETECTED---------");
@@ -542,13 +560,13 @@
           {
             Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
             lcd.print(String(AdultMax - DispCount));
-            digitalWrite(DispMaxed, LOW);
+            digitalWrite(DogAvail, HIGH);
           }
         else
           {
             Serial.print("Remaining for Dog: 0");
             lcd.print("0");
-            digitalWrite(DispMaxed, HIGH);
+            digitalWrite(DogAvail, LOW);
           }
       }
       else
@@ -559,14 +577,14 @@
           {
             Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
             lcd.print(String(PuppyMax - DispCount));            
-            digitalWrite(DispMaxed, LOW);
+            digitalWrite(DogAvail, HIGH);
           }
           
         else
           {
             Serial.print("Remaining for Puppy: 0");
             lcd.print("0");            
-            digitalWrite(DispMaxed, HIGH);
+            digitalWrite(DogAvail, LOW);
           }     
       }
       Serial.println(" | " + WillReset);
@@ -599,7 +617,7 @@
         {
         CTime = ATime;
         DispCount = 0;
-        digitalWrite (DispMaxed, LOW);
+        digitalWrite (DogAvail, HIGH);
         }      
         
         if (DispCount < AdultMax)
@@ -617,10 +635,11 @@
               DispCount++;
               // (Add Command) Set new Timer via RTC Module  
               Timer = TimerDuration;
-              if (DispCount >= AdultMax)
-                digitalWrite (DispMaxed, HIGH);
+
+              if (DispCount >= AdultMax || Timer > 0)
+                digitalWrite(DogAvail, LOW);
               else
-                digitalWrite (DispMaxed, LOW);
+                digitalWrite (DogAvail, HIGH);
 
               //For Serial Display
               for(int i = 0; i < 50; i++) {
@@ -666,7 +685,7 @@
             {
             CTime = PTime;
             DispCount = 0;
-            digitalWrite (DispMaxed, LOW);
+            digitalWrite (DogAvail, HIGH);
             }
             if (DispCount < PuppyMax)
             {
@@ -683,10 +702,10 @@
               DispCount++;  
               Timer = TimerDuration;            
 
-              if (DispCount >= PuppyMax)
-                digitalWrite(DispMaxed, HIGH);
+              if (DispCount >= PuppyMax || Timer > 0)
+                digitalWrite(DogAvail, LOW);
               else
-                digitalWrite (DispMaxed, LOW);
+                digitalWrite (DogAvail, HIGH);
 
 
 
