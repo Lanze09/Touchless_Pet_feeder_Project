@@ -1,9 +1,10 @@
 /* ------------------------------- Touchless Pet Feeder ------------------------------- */
 
-//Sketch uses 16366 bytes (50%) of program storage space. Maximum is 32256 bytes.
-//Global variables use 1641 bytes (80%) of dynamic memory, leaving 407 bytes for local variables. Maximum is 2048 bytes.  
+//Sketch uses 16310 bytes (50%) of program storage space. Maximum is 32256 bytes.
+//Global variables use 1641 bytes (80%) of dynamic memory, leaving 407 bytes for local variables. Maximum is 2048 bytes.
 
 
+  
   #include <Arduino.h>
   #include <stdlib.h>
   #include <stdio.h>
@@ -33,19 +34,15 @@
   int PTime = 0; // Time checker for puppy
   int Timer = 0; // For dispense interval (The pause before next dispense)
   int TCounter = 0;
-  //int Tester = 3;
   int i;
+  String DayTime = "";
   String DOW, DayLight, Hourrr, Minuteee, Seconddd, WillReset;
-  //unsigned long DateTime = 0;
 
   //TENTATIVE VALUES
-  int TimerDuration = 1; // timer Duration per minute
+  int TimerDuration = 2; // timer Duration per minute
   int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
-  String DayTime = "";
-  
-
 
   // Pin Variables
   const int DispensePin = 2;
@@ -61,7 +58,6 @@
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogPin = A1;
-
 
   Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
 
@@ -94,31 +90,20 @@
 
 
   rtc.init(); //Initialize RTC
-
-
   lcd.init(); // initialize the lcd 
   // left to right - yellow green orange brown
   // Print a message to the LCD.
   lcd.setContrast(255); // maximum contrast level
   lcd.backlight();
-  lcd.setCursor(3,0);
-  /*lcd.print("Hello, world!");
-  lcd.setCursor(2,1);
-  lcd.print("I'm Lanze!");
-  lcd.setCursor(0,2);
-  lcd.print("Arduino UNO Project");
-  lcd.setCursor(2,3);
-  lcd.print("Power By 5V!");
-*/
          
          /* // ------------------------------ Use this to reprogram RTC Module ------------------------------
           Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_MAY,
               .day = 1,
-              .hour = 14,
-              .minute = 5,
-              .second = 5,
+              .hour = 5,
+              .minute = 18,
+              .second = 45,
               .dow = Ds1302::DOW_MON};
               rtc.setDateTime(&dt);
           */
@@ -170,8 +155,6 @@
   delay(100);
 
   }
-
-
 
 
   void loop() {
@@ -411,6 +394,11 @@
         {
           if (ATime != 3)
             digitalWrite(DogAvail, HIGH);
+          else
+          {
+            DispCount = 30;
+            digitalWrite(DogAvail, LOW);
+          }
         }
       }
       else
@@ -419,6 +407,11 @@
         {
           if (PTime != 4)
             digitalWrite(DogAvail, HIGH);
+          else
+            {
+              DispCount = 30;
+              digitalWrite(DogAvail, LOW);
+            }
         }
       }
     }
@@ -474,7 +467,7 @@
       }
       else
       {    
-          lcd.print("P-INT:" + String(Timer) + "m REM:");
+          lcd.print("P INT:" + String(Timer) + "m REM:");
 
         if ((PuppyMax - DispCount) > 0)
         {
@@ -560,7 +553,7 @@
           {
             Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
             lcd.print(String(AdultMax - DispCount));
-            digitalWrite(DogAvail, HIGH);
+    //        digitalWrite(DogAvail, HIGH);
           }
         else
           {
@@ -571,13 +564,13 @@
       }
       else
       {
-        lcd.print("P-INT:" + String(Timer) + "m REM:");
+        lcd.print("P INT:" + String(Timer) + "m REM:");
 
         if ((PuppyMax - DispCount) > 0)
           {
             Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
             lcd.print(String(PuppyMax - DispCount));            
-            digitalWrite(DogAvail, HIGH);
+   //         digitalWrite(DogAvail, HIGH);
           }
           
         else
@@ -722,7 +715,7 @@
               Serial.println(" Min/s");
               lcd.clear();
               lcd.setCursor(0, 0);
-              lcd.print("P-INT:" + String(Timer) + "m REM:");
+              lcd.print("P INT:" + String(Timer) + "m REM:");
               if ((PuppyMax - DispCount) > 0)
               {
                 Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
