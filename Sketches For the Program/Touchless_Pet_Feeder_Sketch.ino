@@ -1,5 +1,7 @@
 /* ------------------------------- Touchless Pet Feeder ------------------------------- */
 
+// Sketch uses 16326 bytes (50%) of program storage space. Maximum is 32256 bytes.
+// Global variables use 1641 bytes (80%) of dynamic memory, leaving 407 bytes for local variables. Maximum is 2048 bytes.
   
   #include <Arduino.h>
   #include <stdlib.h>
@@ -36,7 +38,7 @@
   //unsigned long DateTime = 0;
 
   //TENTATIVE VALUES
-  int TimerDuration = 2;
+  int TimerDuration = 2; // timer Duration per minute
   int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
@@ -107,8 +109,18 @@
   lcd.setCursor(2,3);
   lcd.print("Power By 5V!");
 */
-
-
+         
+         /* // ------------------------------ Use this to reprogram RTC Module ------------------------------
+          Ds1302::DateTime dt = {
+              .year = 23,
+              .month = Ds1302::MONTH_MAY,
+              .day = 1,
+              .hour = 14,
+              .minute = 5,
+              .second = 5,
+              .dow = Ds1302::DOW_MON};
+              rtc.setDateTime(&dt);
+          */
 
   // test if clock is halted and set a date-time (see example 2) to start it
       if (rtc.isHalted())
@@ -127,17 +139,36 @@
           rtc.setDateTime(&dt);
       }
 
-  lcd.clear();
-  lcd.setCursor(3,0);
-  lcd.print("Touchless");
-  lcd.setCursor(3,1);
-  lcd.print("Pet Feeder");
-  delay(5000);
 
+  //starting screen
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("---TOUCHLESS----");
+  lcd.setCursor(0,1);
+  lcd.print("---PET FEEDER---");
+  delay(3000);
+
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Thesis Prototype");
+  lcd.setCursor(0,1);
+  lcd.print("for CMPE30252");
+  delay(3000);
+
+  digitalWrite(DispMaxed, HIGH);
+  delay(200);
+  digitalWrite(DispMaxed, LOW);
+  delay(100);
+  digitalWrite(DispMaxed, HIGH);
+  delay(200);
+  digitalWrite(DispMaxed, LOW);
+  delay(100);
+  digitalWrite(DispMaxed, HIGH);
+  delay(200);
+  digitalWrite(DispMaxed, LOW);
+  delay(100);
 
   }
-
-
 
 
 
@@ -175,9 +206,9 @@
       lcd.print("Changed to Adult");
       lcd.setCursor(0, 1);
       lcd.print("Resetting now!");
-      delay(3000);
     }
-    delay(1000);
+    delay(3000);
+    TCounter++;
   }
 
   //Time Checker
@@ -290,7 +321,7 @@
   if (Hourrr.toInt() < 10)
     Hourrr = ("0" + Hourrr);
   else
-    Hourrr = String(now.hour);
+    Hourrr = String(Hourrr);
   if (now.minute < 10)
     Minuteee = ("0" + String(now.minute));
   else
@@ -350,13 +381,41 @@
           CTime = PTime;
           DispCount = 0;
           digitalWrite (DispMaxed, LOW);
+
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("---TOUCHLESS----");
+            lcd.setCursor(0,1);
+            lcd.print("---PET FEEDER---");
+            delay(3000);
+
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("Thesis Prototype");
+            lcd.setCursor(0,1);
+            lcd.print("for CMPE30252");
+            delay(3000);
+
+            digitalWrite(DispMaxed, HIGH);
+            delay(200);
+            digitalWrite(DispMaxed, LOW);
+            delay(100);
+            digitalWrite(DispMaxed, HIGH);
+            delay(200);
+            digitalWrite(DispMaxed, LOW);
+            delay(100);
+            digitalWrite(DispMaxed, HIGH);
+            delay(200);
+            digitalWrite(DispMaxed, LOW);
+            delay(100);
+
         }
       }
 
 
 
 
-  ////  ------------------- Per minute actions -------------------
+  ////  ------------------- Per minute actions ------------------- fminute fperminute
   if (TCounter != now.minute)
     {
       TCounter = now.minute;
@@ -381,7 +440,7 @@
       
       if (Adult == true)
       {
-        lcd.print("A-INT:" + String(Timer) + "m-REM:");
+        lcd.print("A INT:" + String(Timer) + "m REM:");
 
         if ((AdultMax - DispCount) > 0)
         {
@@ -397,12 +456,12 @@
       }
       else
       {    
-          lcd.print("P-INT:" + String(Timer) + "m-REM:");
+          lcd.print("P-INT:" + String(Timer) + "m REM:");
 
         if ((PuppyMax - DispCount) > 0)
         {
           Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
-          lcd.print(String(AdultMax - DispCount));
+          lcd.print(String(PuppyMax - DispCount));
         }
         else
           {
@@ -418,8 +477,8 @@
       lcd.print(WillReset);
       Serial.println("*** DEVELOPER DATA BELOW ***");
       Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
-      Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax) + " / HumanPin: " + String(HumanPin));
-      Serial.println("Dog pin: " + String(DogPin));
+      Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax) + " / now.hour: " + String(now.hour));
+      Serial.println("Hourrr: " + String(Hourrr) + " / DOW: " + String(now.dow));
       Serial.println("-----------------");
   }
 
@@ -427,7 +486,7 @@
 
 
 
-  //  ------------------- Human Detected -------------------
+  //  ------------------- Human Detected ------------------- fhuman
   if (digitalRead(HumanPin) == 1)
   {
     digitalWrite(DispSignal, HIGH);
@@ -478,8 +537,7 @@
       lcd.setCursor(0, 0);
       if (Adult == true)
       {
-        lcd.print("A-INT:" + String(Timer) + "m-REM:");
-
+        lcd.print("A INT:" + String(Timer) + "m REM: ");
         if ((AdultMax - DispCount) > 0)
           {
             Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
@@ -495,12 +553,12 @@
       }
       else
       {
-        lcd.print("P-INT:" + String(Timer) + "m-REM:");
+        lcd.print("P-INT:" + String(Timer) + "m REM:");
 
         if ((PuppyMax - DispCount) > 0)
           {
             Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
-            lcd.print(String(AdultMax - DispCount));            
+            lcd.print(String(PuppyMax - DispCount));            
             digitalWrite(DispMaxed, LOW);
           }
           
@@ -567,9 +625,8 @@
               //For Serial Display
               for(int i = 0; i < 50; i++) {
                 Serial.println();}
-              Serial.println("-----------------");
-              Serial.print("-Doggo Detected-");
-              Serial.println(" " + DayTime);
+              Serial.println("--------Doggo Detected---------");
+              Serial.println(DayTime);
               Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
               Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
               Serial.print(" | Interval: ");
@@ -577,7 +634,7 @@
               Serial.println(" Min/s");
               lcd.clear();
               lcd.setCursor(0, 0);
-              lcd.print("A-INT:" + String(Timer) + "m-REM:");
+              lcd.print("A INT:" + String(Timer) + "m REM:");
               if ((AdultMax - DispCount) > 0)
               {
                 Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
@@ -638,8 +695,7 @@
               for(int i = 0; i < 50; i++) {
                 Serial.println();}
               Serial.println("---------Puppy DETECTED--------");
-              Serial.print("-Puppy Detected-");
-              Serial.println(" " + DayTime);
+              Serial.println(DayTime);
               Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
               Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
               Serial.print(" | Interval: ");
@@ -647,7 +703,7 @@
               Serial.println(" Min/s");
               lcd.clear();
               lcd.setCursor(0, 0);
-              lcd.print("P-INT:" + String(Timer) + "m-REM:");
+              lcd.print("P-INT:" + String(Timer) + "m REM:");
               if ((PuppyMax - DispCount) > 0)
               {
                 Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
