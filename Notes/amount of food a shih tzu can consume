@@ -1,0 +1,42 @@
+"amount of food a shih tzu can consume"
+
+
+0-1 year (puppy) -> 1-2 oz (Approx 28-57g)
+1-9 years (adult) -> 2-3.4 oz (Approx 57-96g)
+9+ years (senior) -> 2-3.4 oz (Approx 57-96g)
+
+**consult vet to get accurate amount of food to obtain per day (varies on age)
+
+Reference: https://www.google.com/amp/s/www.petplate.com/blog/shih-tzu-nutrition-guide/amp/
+
+used https://www.unitconverters.net/ to convert ohms to grams
+
+
+_________________________
+
+• Morning: We recommend that you feed your Shih Tzu at the same time each morning. This can coincide with any early responsibilities your family has, such as work or school.
+• Mid-day: This meal can be tough for busy families, as much of the family may be away from the house. If no one can be home at this time, we’d recommend filling an automated treat dispenser with their meal. You can then set it to dispense around this time.
+• Evening: For the last meal of the day, you can feed your Shih Tzu not too long before bed so they have enough energy throughout the night.
+• Snacking: It’s advisable that the Shih Tzu is given periodic snacks throughout the day to keep their energy up. Looking for some healthy treats that will leave your Shih Tzu drooling? Check out our very own organic treat here!
+
+Reference: https://www.google.com/amp/s/www.petplate.com/blog/shih-tzu-nutrition-guide/amp/
+
+_________________________
+3 – 12 months	7:00 AM, 11:00 AM, 3:00 PM, and 7:00 PM
+1 – 9 years	7:00 AM, 12:00 PM, and 7:00 PM
+10 years and above	7:00 AM and 7:00 PM
+
+Reference: https://www.bubblypet.com/how-much-to-feed-a-shih-tzu/#:~:text=An%20adult%20Shih%20Tzu%E2%80%99s%20mealtimes%20should%20be%20in,be%20fed%20once%20in%20the%20morning%20and%20evening.
+
+__________________________
+
+ATime = 0 means Morning (7am - 12pm)
+ATime = 1 means Lunch (12pm - 7pm)
+ATime = 2 means Evening (7pm - 12am)
+ATime = 3 means Midnight (12am - 7am) [No feeding]
+
+PTime = 0 Means Early Morning (7am - 11am)
+PTime = 1 Means Lunch (11am - 3pm)
+PTime = 2 Means Afternoon (3pm - 7pm)
+PTime = 3 Means Evening (7pm - 12am)
+Ptime = 4 Means  Midnight (12am - 7am) [No feeding]
