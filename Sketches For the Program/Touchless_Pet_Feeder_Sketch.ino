@@ -30,14 +30,15 @@
   int PTime = 0; // Time checker for puppy
   int Timer = 0; // For dispense interval (The pause before next dispense)
   int TCounter = 0;
+  //int Tester = 3;
   String DOW, DayLight, Hourrr, Minuteee, Seconddd, WillReset;
   //unsigned long DateTime = 0;
 
   //TENTATIVE VALUES
-  int TimerDuration = 1;
-  int PuppyMax = 2; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  int AdultMax = 3; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  bool Adult = false; // Switch for dog age (false=Puppy ; true=Adult/Senior)
+  int TimerDuration = 2;
+  int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
   String DayTime = "";
 
 
@@ -100,6 +101,8 @@
   lcd.print("Power By 5V!");
 
 
+
+
   // test if clock is halted and set a date-time (see example 2) to start it
       if (rtc.isHalted())
       {
@@ -121,6 +124,9 @@
   }
 
 
+
+
+
   void loop() {
     // This shit runs over and over and over again no cap
 
@@ -129,7 +135,7 @@
   digitalWrite(DispSignal, LOW);
 
   //Time Checker
-  if (Adult == true)
+  if (Adult == true) //ADT Time Checker
   {
     digitalWrite (AdultSignalPin, HIGH);
 
@@ -158,7 +164,7 @@
         WillReset = "Will reset at 7am";
       }
   }
-  else
+  else //Puppy Time Checker
   {
     digitalWrite (AdultSignalPin, LOW);
 
@@ -171,13 +177,13 @@
     else if (now.hour >= 11 && now.hour < 15)
       {
         PTime = 1;
-        DayTime = "Late Morning, Puppy";
+        DayTime = "Lunch Time, Puppy";
         WillReset = "Will reset at 3pm";
       }
     else if (now.hour >= 15 && now.hour < 19)
       {
         PTime = 2;
-        DayTime = "Lunch Time, Puppy";
+        DayTime = "Afternoon, Puppy";
         WillReset = "Will reset at 7pm";
       }
     else if (now.hour >= 19)
@@ -191,22 +197,31 @@
         PTime = 4;
         DayTime = "Midnight, Puppy";
         WillReset = "Will reset at 7am";
-      }
-  }
+      } 
+  } 
 
-    if (now.dow == 1)
+/*    //DayTime Change Tester
+    if (Tester <= 0)
+      {
+        ATime++;
+        Tester = 3;
+      }
+*/
+
+    //Day of the week naming
+    if (now.dow == 7)
       DOW = "SUN";
-    else if (now.dow == 2)
+    else if (now.dow == 1)
       DOW = "MON";
-    else if (now.dow == 3)
+    else if (now.dow == 2)
       DOW = "TUE";
-    else if (now.dow == 4)
+    else if (now.dow == 3)
       DOW = "WED";
-    else if (now.dow == 5)
+    else if (now.dow == 4)
       DOW = "THU";
-    else if (now.dow == 6)
+    else if (now.dow == 5)
       DOW = "FRI";
-    else if (now.dow == 7)
+    else if (now.dow == 6)
       DOW = "SAT";
 
   // Turn time into 12-Hour format
@@ -226,8 +241,8 @@
     }
 
   //Make the time 2 digits if below 10
-  if (now.hour < 10)
-    Hourrr = ("0" + String(now.hour));
+  if (Hourrr.toInt() < 10)
+    Hourrr = ("0" + Hourrr);
   else
     Hourrr = String(now.hour);
   if (now.minute < 10)
@@ -240,16 +255,17 @@
     Seconddd = String(now.second);
 
 
+  //Will disable dog sensor if midnight
   if (ATime == 3 || PTime == 4)
-    DispCount = 10;
-
-
-  if (TCounter != now.minute) // change all now.second to minute
     {
-      TCounter = now.minute;
-      Timer--;
-      if (Timer < 0)
-        Timer = 0;
+      DispCount = 10;
+      digitalWrite(DispMaxed, HIGH);
+    }
+    
+
+
+
+
 
     // To ping if maximum dispense has been reached
     if (Adult == true)
@@ -257,7 +273,6 @@
       if (DispCount >= AdultMax)
         {
           digitalWrite (DispMaxed, HIGH);
-          //Serial.println("NOTE: Maximum reached. Wait til next DayTime!");
         }
       else
         digitalWrite (DispMaxed, LOW);
@@ -267,11 +282,113 @@
       if (DispCount >= PuppyMax)
         {
           digitalWrite (DispMaxed, HIGH);
-          //Serial.println("NOTE: Maximum reached. Wait til next DayTime!");
         }
       else
         digitalWrite (DispMaxed, LOW);
     }
+
+      // Reset if Daytime changes
+      if (Adult == true)
+      {
+        if (CTime != ATime) //DESC-- Daytime changes. Will reset the DispCount to zero
+        {
+          CTime = ATime;
+          DispCount = 0;
+          digitalWrite (DispMaxed, LOW);
+        }
+      }
+      else
+      {
+        if (CTime != PTime) //DESC-- Daytime changes. Will reset the DispCount to zero
+        {
+          CTime = PTime;
+          DispCount = 0;
+          digitalWrite (DispMaxed, LOW);
+        }
+      }
+
+
+
+
+  ////  ------------------- Per minute actions -------------------
+  if (TCounter != now.minute)
+    {
+      TCounter = now.minute;
+      Timer--;
+      if (Timer < 0)
+      {
+        Timer = 0;
+      }   
+    
+
+
+      //For Serial Display per minute
+      for(int i = 0; i < 50; i++) {
+        Serial.println();}
+      Serial.println("-----------------");
+      Serial.println(DayTime);
+      Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
+      Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
+      Serial.print(" | Interval: ");
+      Serial.print(Timer);
+      Serial.println(" Min/s");
+      if (Adult == true)
+      {
+        if ((AdultMax - DispCount) > 0)
+          Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
+        else
+          {
+            Serial.print("Remaining for Dog: 0");
+            digitalWrite(DispMaxed, HIGH);
+          }
+      }
+      else
+      {
+        if ((PuppyMax - DispCount) > 0)
+          Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
+        else
+          {
+            Serial.print("Remaining for Puppy: 0");
+            digitalWrite(DispMaxed, HIGH);
+          }     
+      }
+      Serial.println(" | " + WillReset);
+      Serial.println("*** DEVELOPER DATA BELOW ***");
+      Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
+      Serial.println("Adult: " + String(Adult) + " / Pup Max: " + String(PuppyMax) + " / Adt Max: " + String(AdultMax));
+      Serial.println("-----------------");
+  }
+
+
+
+  //  ------------------- Human Detected -------------------
+  if (digitalRead(HumanPin) == 1)
+  {
+    digitalWrite(DispSignal, HIGH);
+    // (Add Command) Set command to open dispenser via servo motor
+    DispCount++;
+    delay(1000);
+    digitalWrite(DispSignal, LOW);
+
+      // Reset if Daytime changes
+      if (Adult == 1)
+      {
+        if (CTime != ATime) //DESC-- Daytime changes. Will reset the DispCount to zero
+        {
+          CTime = ATime;
+          DispCount = 0;
+          digitalWrite (DispMaxed, LOW);
+        }
+      }
+      else
+      {
+        if (CTime != PTime) //DESC-- Daytime changes. Will reset the DispCount to zero
+        {
+          CTime = PTime;
+          DispCount = 0;
+          digitalWrite (DispMaxed, LOW);
+        }
+      }
 
       //For Serial Display
       for(int i = 0; i < 50; i++) {
@@ -283,53 +400,48 @@
       Serial.print(" | Interval: ");
       Serial.print(Timer);
       Serial.println(" Min/s");
-      if ((AdultMax - DispCount) >= 0)
-        Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
+      if (Adult == true)
+      {
+        if ((AdultMax - DispCount) > 0)
+          {
+            Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
+            digitalWrite(DispMaxed, LOW);
+          }
+        else
+          {
+            Serial.print("Remaining for Dog: 0");
+            digitalWrite(DispMaxed, HIGH);
+          }
+      }
       else
-        Serial.print("Remaining for Dog: 0");
+      {
+        if ((PuppyMax - DispCount) > 0)
+          {
+            Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
+            digitalWrite(DispMaxed, LOW);
+          }
+          
+        else
+          {
+            Serial.print("Remaining for Puppy: 0");
+            digitalWrite(DispMaxed, HIGH);
+          }     
+      }
       Serial.println(" | " + WillReset);
       Serial.println("*** DEVELOPER DATA BELOW ***");
       Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
       Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax));
       Serial.println("-----------------");
     }
-  
-  // Human Detected
-  if (digitalRead(HumanPin) == 1)
-  {
-    digitalWrite(DispSignal, HIGH);
-    // (Add Command) Set command to open dispenser via servo motor
-    DispCount++;
-    delay(1000);
-    digitalWrite(DispSignal, LOW);
-
-    //For Serial Display
-    for(int i = 0; i < 50; i++) {
-      Serial.println();}
-    Serial.println("-----------------");
-    Serial.print("-Human Detected-");
-    Serial.println(" " + DayTime);
-    Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
-    Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
-    Serial.print(" | Interval: ");
-    Serial.print(Timer);
-    Serial.println(" Min/s");
-    if ((AdultMax - DispCount) >= 0)
-      Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
-    else
-      Serial.print("Remaining for Dog: 0");
-    Serial.println(" | " + WillReset);
-    Serial.println("*** DEVELOPER DATA BELOW ***");
-    Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
-    Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax));
-    Serial.println("-----------------");
-    
     // (Add Command) Set command to close dispenser via servo motor
     delay(300);
-  }
+  
 
 
-  // Dog Detected
+
+
+
+  //   ------------------- Dog or Puppy Detected -------------------
   if (digitalRead(DogPin) == 1)
   {
   if (Timer <= 0)
@@ -354,7 +466,7 @@
               // (Add Command) Set command to close dispenser via servo motor
               DispCount++;
               // (Add Command) Set new Timer via RTC Module  
-
+              Timer = TimerDuration;
               if (DispCount >= AdultMax)
                 digitalWrite (DispMaxed, HIGH);
               else
@@ -371,7 +483,7 @@
               Serial.print(" | Interval: ");
               Serial.print(Timer);
               Serial.println(" Min/s");
-              if ((AdultMax - DispCount) >= 0)
+              if ((AdultMax - DispCount) > 0)
                 Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
               else
                 Serial.print("Remaining for Dog: 0");
@@ -380,8 +492,6 @@
               Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
               Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax));
               Serial.println("-----------------");
-
-              Timer = TimerDuration;
               delay(300);
           }
         }
@@ -404,7 +514,8 @@
               delay(1000);
               digitalWrite(DispSignal, LOW);
               // (Add Command) Set command to close dispenser via servo motor
-              DispCount++;              
+              DispCount++;  
+              Timer = TimerDuration;            
 
               if (DispCount >= PuppyMax)
                 digitalWrite(DispMaxed, HIGH);
@@ -415,24 +526,24 @@
               for(int i = 0; i < 50; i++) {
                 Serial.println();}
               Serial.println("-----------------");
-              Serial.print("-Doggo Detected-");
+              Serial.print("-Puppy Detected-");
               Serial.println(" " + DayTime);
               Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
               Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
               Serial.print(" | Interval: ");
               Serial.print(Timer);
               Serial.println(" Min/s");
-              if ((PuppyMax - DispCount) >= 0)
-                Serial.print("Remaining for Dog: " + String(PuppyMax - DispCount));
+              if ((PuppyMax - DispCount) > 0)
+                Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
               else
-                Serial.print("Remaining for Dog: 0");
+                Serial.print("Remaining for Puppy: 0");
               Serial.println(" | " + WillReset);
               Serial.println("*** DEVELOPER DATA BELOW ***");
               Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
               Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax));
               Serial.println("-----------------");
 
-              Timer = TimerDuration;
+              
               delay(300);
             }
           }
