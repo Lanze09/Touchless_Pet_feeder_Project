@@ -19,3 +19,4 @@ REM:13 --> This is the remaining dispense for the current daytime. It will decre
 
 RST@7pm -->> This shows the next time when the REM or the Remaining Dispenses will reset. (For this example, assuming that the maximum dispense for Adult dog is 25. This means the REM or the remaining dispense will be set back to 25 at 7:00pm, thus the dog sensor will be active again).
 
+ 
