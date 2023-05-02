@@ -1,0 +1,21 @@
+LCD Display Explanation: 
+
+Example Display is as follows: 
+
+***************
+A INT:5m REM:13
+06:10PM RST@7pm
+***************
+
+Description: 
+
+A --> Its the mode indicator. This shows if Device is switched to Puppy or Adult. (A For Adult // P For Puppy).
+
+INT:5m --> Displays the interval. This Displays the number of minutes interval before the dog sensor will be active again. The timer resets everytime the dispenser opens via DOG SENSOR. (On this example, it means dog sensor will be active again after 5 minutes).
+
+REM:13 --> This is the remaining dispense for the current daytime. It will decrement everytime the device dispenses food. Once it reaches zero, the dog sensor will stop working until the next daytime reset. (On this example, it says there are 13 remaining dispenses before it runs out.).
+
+06:10PM -->> This is simply the current time today. Self explanatory. Take note, this data is coming from the RTC Module (D21302 powered by CR2032). Not from the PC or any other sources
+
+RST@7pm -->> This shows the next time when the REM or the Remaining Dispenses will reset. (For this example, assuming that the maximum dispense for Adult dog is 25. This means the REM or the remaining dispense will be set back to 25 at 7:00pm, thus the dog sensor will be active again).
+
