@@ -1,6 +1,20 @@
 /* ------------------------------- Touchless Pet Feeder ------------------------------- */
 
   
+/*
+
+for LCD, 
+
+VCC and GND connected to the bridge of the longer bread board
+SDA - A4
+SCL - A5
+
+2 pins on the left part
+lower pin - left pin of 10k potentiometer (knob facing you)
+upper pin - middle pin of 10k potentiometer (knob facing you)
+
+*/
+
   #include <Arduino.h>
   #include <stdlib.h>
   #include <stdio.h>
@@ -22,6 +36,8 @@
   // software serial #2: RX = digital pin 7, TX = digital pin 8
   SoftwareSerial portTwo(7,8);
 
+  SoftwareSerial SIM900A(A2,A3);
+
 
   // Essential Variables
   int DispCount = 0; // Food dispensing frequency counter
@@ -36,9 +52,9 @@
   String DOW, DayLight, Hourrr, Minuteee, Seconddd, WillReset, Time;
 
   //TENTATIVE VALUES
-  int TimerDuration = 5; // timer Duration per minute
-  int PuppyMax = 15; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  int AdultMax = 25; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int TimerDuration = 3; // timer Duration per minute
+  int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
 
   // Pin Variables
@@ -57,6 +73,8 @@
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogPin = A1;
+  const int GSMrx = A2;
+  const int GSMtx = A3;
 
   Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
 
@@ -75,8 +93,10 @@
 
   void setup() {
     // This shit runs once fr fr
-
+  
+  //SIM900A.begin(9600);
   Serial.begin(9600);
+
 
   pinMode (DispensePin, OUTPUT);
   pinMode (AgePin, INPUT);
@@ -96,16 +116,16 @@
   lcd.backlight();
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-   /*       Ds1302::DateTime dt = {
+    /*      Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_MAY,
-              .day = 20,
-              .hour = 16,
-              .minute = 7,
-              .second = 20,
+              .day = 27,
+              .hour = 23,
+              .minute = 24,
+              .second = 15,
               .dow = Ds1302::DOW_SAT};
               rtc.setDateTime(&dt);
-     */   
+       */ 
 
   // test if clock is halted and set a date-time (see example 2) to start it
       if (rtc.isHalted())
@@ -169,6 +189,20 @@
   //servomotor setup
   DispMotor.attach(ServoPin);
   DispMotor.write(0);
+
+/*
+
+  if (Serial.available()>0)
+   switch(Serial.read())
+  {
+    case 's':
+      SendMessage();
+      break;
+  }
+
+ if (SIM900A.available()>0)
+   Serial.write(SIM900A.read());
+*/
 
 
   //Age Button clicked or swtiched
@@ -765,3 +799,24 @@
       }    
     }
   }
+
+/*
+
+void SendMessage()
+{
+  Serial.println ("Sending Message");
+  SIM900A.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
+  delay(1000);
+  Serial.println ("Set SMS Number");
+  SIM900A.println("AT+CMGS=\"+639652866745\"\r"); //Mobile phone number to send message
+  delay(1000);
+  Serial.println ("Set SMS Content");
+  SIM900A.println("This is the Arduino speaking. Good Evening.");// Messsage content
+  delay(100);
+  Serial.println ("Finish");
+  SIM900A.println((char)26);// ASCII code of CTRL+Z
+  delay(1000);
+  Serial.println ("Message has been sent");
+}
+
+*/
