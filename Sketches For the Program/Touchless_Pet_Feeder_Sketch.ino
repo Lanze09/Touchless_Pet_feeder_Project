@@ -36,7 +36,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   // software serial #2: RX = digital pin 7, TX = digital pin 8
   SoftwareSerial portTwo(7,8);
 
-  SoftwareSerial SIM900A(A2,A3);
+  // SoftwareSerial SIM900A(A2,A3);
 
 
   // Essential Variables
@@ -116,16 +116,16 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   lcd.backlight();
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-    /*      Ds1302::DateTime dt = {
+    /*          Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_MAY,
               .day = 27,
-              .hour = 23,
-              .minute = 24,
-              .second = 15,
+              .hour = 16,
+              .minute = 51,
+              .second = 0,
               .dow = Ds1302::DOW_SAT};
               rtc.setDateTime(&dt);
-       */ 
+       */
 
   // test if clock is halted and set a date-time (see example 2) to start it
       if (rtc.isHalted())
@@ -187,8 +187,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
 
   //servomotor setup
-  DispMotor.attach(ServoPin);
-  DispMotor.write(0);
+  //DispMotor.attach(ServoPin);
+  //DispMotor.write(0);
 
 /*
 
@@ -477,9 +477,6 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
       }
       
 
-
-
-    
       //For Serial Display per minute
       for(i = 0; i < 50; i++) {
         Serial.println();}
