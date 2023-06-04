@@ -69,7 +69,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   const int Trig = 10;
   const int AdultSignalPin = 11;
   //const int PowerPin = 12; 
-  const int Echo = 12;
+  //const int Echo = 12;
+  const int TankSensor = 12;
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogPin = A1;
@@ -105,6 +106,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   pinMode (SwitchPin, INPUT);
   pinMode (DispSignal, OUTPUT);
   //pinMode (PowerPin, OUTPUT);
+  pinMode (TankSensor, INPUT);
   pinMode (AdultSignalPin, OUTPUT);
   pinMode (DogAvail, OUTPUT);
 
@@ -135,12 +137,12 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
           Ds1302::DateTime dt = {
               .year = 23,
-              .month = Ds1302::MONTH_APR,
-              .day = 29,
-              .hour = 20,
-              .minute = 24,
-              .second = 59,
-              .dow = Ds1302::DOW_SAT
+              .month = Ds1302::MONTH_JUN,
+              .day = 9,
+              .hour = 16,
+              .minute = 20,
+              .second = 0,
+              .dow = Ds1302::DOW_FRI
           };
           rtc.setDateTime(&dt);
       }
@@ -179,6 +181,19 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
   Servo DispMotor;
 
+
+  void CheckTank()
+  {
+  // Tank Sensor stops detecing object
+  if (digitalRead(TankSensor) == 1)
+  {
+    Serial.println("Tank is running out of food, Please refill");
+    Serial.println("TankSensor: " + String((digitalRead(TankSensor))));
+    delay(1000);
+  }
+  }
+
+
   void loop() {
     // This shit runs over and over and over again no cap
 
@@ -204,6 +219,13 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
  if (SIM900A.available()>0)
    Serial.write(SIM900A.read());
 */
+
+
+  if (Serial.available()>0)
+    {
+      if (Serial.read() == 'T')
+        CheckTank();
+    }
 
 
   //Age Button clicked or swtiched
@@ -387,6 +409,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
           CTime = ATime;
           DispCount = 0;
           digitalWrite (DogAvail, HIGH);
+          CheckTank();
         }
       }
       else
@@ -396,6 +419,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
           CTime = PTime;
           DispCount = 0;
           digitalWrite (DogAvail, LOW);
+          CheckTank();
 
             lcd.clear();
             lcd.setCursor(0,0);
