@@ -63,8 +63,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   const int AgePin = 4;
   const int PIN_DAT = 5;
   const int PIN_ENA = 6;
-  const int SwitchPin = 7;
-  const int ServoPin = 8;
+  const int ServoPin = 7;
+  const int SwitchPin = 8;
   const int DogAvail = 9;
   const int Trig = 10;
   const int AdultSignalPin = 11;
@@ -102,6 +102,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   pinMode (AgePin, INPUT);
   pinMode (DogPin, INPUT);
   pinMode (HumanPin, INPUT);
+  pinMode (SwitchPin, INPUT);
   pinMode (DispSignal, OUTPUT);
   //pinMode (PowerPin, OUTPUT);
   pinMode (AdultSignalPin, OUTPUT);
@@ -208,6 +209,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   //Age Button clicked or swtiched
   if (digitalRead(SwitchPin) == 1)
   {
+    Serial.println("Age Switched");    
     if (Adult == true)
     {
       Adult = false;
