@@ -188,8 +188,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   if (digitalRead(TankSensor) == 1)
   {
     Serial.println("Tank is running out of food, Please refill");
-    Serial.println("TankSensor: " + String((digitalRead(TankSensor))));
-    delay(1000);
+    delay(10);
+    Serial.println("TankSensor: " + String((digitalRead(TankSensor))));    
   }
   }
 
@@ -223,7 +223,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
   if (Serial.available()>0)
     {
-      if (Serial.read() == 'T')
+      if (Serial.read() == 'T' || Serial.read() == 't')
         CheckTank();
     }
 
