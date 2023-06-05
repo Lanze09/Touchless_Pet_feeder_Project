@@ -99,7 +99,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   //SIM900A.begin(9600);
   Serial.begin(9600);
 
-  //DispMotor.attach(ServoPin);
+  
 
   //pinMode (DispensePin, OUTPUT);
   //pinMode (AgePin, INPUT);
@@ -107,6 +107,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   pinMode (HumanPin, INPUT);
   pinMode (SwitchPin, INPUT);
   pinMode (DispSignal, OUTPUT);
+  pinMode (ServoPin, OUTPUT);
   //pinMode (PowerPin, OUTPUT);
   pinMode (TankSensor, INPUT);
   //pinMode (AdultSignalPin, OUTPUT);
@@ -119,6 +120,10 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   // Print a message to the LCD.
   lcd.setContrast(255); // maximum contrast level
   lcd.backlight();
+
+  DispMotor.attach(ServoPin);
+  DispMotor.write(0);
+
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
     /*          Ds1302::DateTime dt = {
@@ -189,13 +194,23 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
   void CheckTank()
   {
-  // Tank Sensor stops detecing object
-  if (digitalRead(TankSensor) == 1)
-  {
-    Serial.println("Tank is running out of food, Please refill");
-    delay(10);
-    Serial.println("TankSensor: " + String((digitalRead(TankSensor))));    
+    // Tank Sensor stops detecing object
+    if (digitalRead(TankSensor) == 1)
+    {
+     Serial.println("Tank is running out of food, Please refill");
+     delay(10);
+     Serial.println("TankSensor: " + String((digitalRead(TankSensor))));    
+    }
   }
+
+  void Dispense()
+  {
+    digitalWrite(DispSignal, HIGH);
+    Serial.println("Dispenses Food");
+    DispMotor.write(180);
+    delay(1000);
+    DispMotor.write(0);
+    digitalWrite(DispSignal, LOW);
   }
 
 
@@ -206,7 +221,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   rtc.getDateTime(&now);
   digitalWrite(DispSignal, LOW);
   
-  //DispMotor.write(0);
+  DispMotor.write(0);
 
 /*
 
@@ -222,32 +237,24 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
    Serial.write(SIM900A.read());
 */
 
-  /*/Tank Sensor Value checker (TESTER)
-  Serial.println("Tank: " + String((digitalRead(TankSensor))));
-  delay("500");  
+  //Tank Sensor Value checker (TESTER)
+  //Serial.println("Tank: " + String((digitalRead(TankSensor))));
+  //delay("500");  
 
+
+//My Fckin Everything Checker
 if (Serial.available() > 0) {
   switch (Serial.read()) {
     case 'T':
     case 't':
       CheckTank();
       break;
+    case 's':
+    case 'S':
+      Dispense();
+      break;
   }
 }
-*/
-
-
-  //Servo Tester
-  if (Serial.available()>0){
-    switch(Serial.read()){
-      case 's':
-      Serial.println("Servo must rotate now");
-      /*DispMotor.write(180);
-      delay(100);
-      DispMotor.write(0);*/
-      break;
-    }
-  }
 
 
   //Age Button clicked or swtiched
@@ -625,9 +632,9 @@ if (Serial.available() > 0) {
 
 
       //fServo Rotation
-      DispMotor.write(180);
+      /*DispMotor.write(180);
       delay(1000);
-      DispMotor.write(0);      
+      DispMotor.write(0);*/
 
       //For Serial Display 
       for(int i = 0; i < 50; i++) {
@@ -802,9 +809,9 @@ if (Serial.available() > 0) {
 
 
             //fServo Rotation
-            DispMotor.write(180);
+            /*DispMotor.write(180);
             delay(1000);
-            DispMotor.write(0);
+            DispMotor.write(0);*/
 
               //For Serial Display (Puppy)
               for(int i = 0; i < 50; i++) {
