@@ -1,0 +1,16 @@
+// Lanze
+
+To Do: 
+
+• Configure the Servo Motor
+• Buy new 9V Battery
+• Choose between the SIM900A or BLYNK for notification when tank is almost empty
+
+______________
+
+Done today: 
+• Updated pin allocations
+• Fixed Servo bug
+• Fixed Serial Communication bug
+• Fixed I2C LCD bug
+• Fixed some delays on Servo and LCD displays
