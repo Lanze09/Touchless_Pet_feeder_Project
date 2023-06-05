@@ -596,12 +596,8 @@ if (Serial.available() > 0) {
   //  ------------------- Human Detected ------------------- fhuman
   if (digitalRead(HumanPin) != 1)
   {
-    digitalWrite(DispSignal, HIGH);
     // (Add Command) Set command to open dispenser via servo motor
     DispCount++;
-    delay(1000);
-    digitalWrite(DispSignal, LOW);
-
       // Reset if Daytime changes
       if (Adult == 1)
       {
@@ -609,6 +605,7 @@ if (Serial.available() > 0) {
         {
           CTime = ATime;
           DispCount = 0;
+          CheckTank();
           digitalWrite (DogAvail, HIGH);
         }
       }
@@ -618,6 +615,7 @@ if (Serial.available() > 0) {
         {
           CTime = PTime;
           DispCount = 0;
+          CheckTank();
           digitalWrite (DogAvail, HIGH);
         }
       }
@@ -628,8 +626,9 @@ if (Serial.available() > 0) {
       lcd.print("Human Detected!");
       lcd.setCursor(0,1);
       lcd.print("Dispenses Food!");                    
-      delay(1000);
-
+      delay(800);
+      Dispense();
+      
 
       //fServo Rotation
       /*DispMotor.write(180);
@@ -646,8 +645,10 @@ if (Serial.available() > 0) {
       Serial.print(" | Interval: ");
       Serial.print(Timer);
       Serial.println(" Min/s");
+      delay(1000);
       lcd.clear();
       lcd.setCursor(0, 0);
+
       if (Adult == true)
       {
         lcd.print("A INT:" + String(Timer) + "m REM: ");
@@ -699,7 +700,7 @@ if (Serial.available() > 0) {
 
 
 
-  //   ------------------- Dog or Puppy Detected -------------------
+  //   ------------------- Dog or Puppy Detected ------------------- fDog
  if (digitalRead(DogPin) != 1)
   {
   if (Timer <= 0)
@@ -712,20 +713,22 @@ if (Serial.available() > 0) {
         {
         CTime = ATime;
         DispCount = 0;
+        CheckTank();
         digitalWrite (DogAvail, HIGH);
         }      
         
         if (DispCount < AdultMax)
           {
-              digitalWrite(DispSignal, HIGH);
               // (Add Command) Set command to open dispenser via servo motor
               lcd.clear();
               lcd.setCursor(0, 0);
               lcd.print("Dog Detected!");
               lcd.setCursor(0,1);
               lcd.print("Dispenses Food!");                            
-              delay(2000);
               digitalWrite(DispSignal, LOW);
+              delay(800);
+              Dispense();
+              delay(1000);
               // (Add Command) Set command to close dispenser via servo motor
               DispCount++;
               // (Add Command) Set new Timer via RTC Module  
@@ -735,11 +738,6 @@ if (Serial.available() > 0) {
                 digitalWrite(DogAvail, LOW);
               else
                 digitalWrite (DogAvail, HIGH);
-
-            //fServo Rotation
-            /*DispMotor.write(180);
-            delay(1000);
-            DispMotor.write(0);*/
 
               //For Serial Display
               for(int i = 0; i < 50; i++) {
@@ -796,8 +794,10 @@ if (Serial.available() > 0) {
               lcd.print("Puppy Detected!");
               lcd.setCursor(0,1);
               lcd.print("Dispenses Food!");              
-              delay(2000);
+              delay(800);
               digitalWrite(DispSignal, LOW);
+              Dispense();
+              delay(1000);
               // (Add Command) Set command to close dispenser via servo motor
               DispCount++;  
               Timer = TimerDuration;            
@@ -806,12 +806,6 @@ if (Serial.available() > 0) {
                 digitalWrite(DogAvail, LOW);
               else
                 digitalWrite (DogAvail, HIGH);
-
-
-            //fServo Rotation
-            /*DispMotor.write(180);
-            delay(1000);
-            DispMotor.write(0);*/
 
               //For Serial Display (Puppy)
               for(int i = 0; i < 50; i++) {
