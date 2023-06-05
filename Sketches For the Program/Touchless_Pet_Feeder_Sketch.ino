@@ -37,7 +37,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   // software serial #2: RX = digital pin 7, TX = digital pin 8
   SoftwareSerial portTwo(7,8);
 
-  // SoftwareSerial SIM900A(A2,A3);
+  //SoftwareSerial SIM900A(A2,A3);
 
 
   // Essential Variables
@@ -96,8 +96,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   void setup() {
     // This shit runs once fr fr
   
-  //SIM900A.begin(9600);
-  Serial.begin(9600);
+  
+  Serial.begin(115200);
+  //SIM900A.begin(115200);
 
   
 
@@ -200,6 +201,23 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
      Serial.println("Tank is running out of food, Please refill");
      delay(10);
      Serial.println("TankSensor: " + String((digitalRead(TankSensor))));    
+     /*SIM900A.println("AT+CMGF=1");
+     delay(800);
+     Serial.println ("Set SMS Number");
+     SIM900A.println("AT+CMGS=\"+639652866745\"\r");
+     delay(800);
+     SIM900A.println("Hi, your Dog's food tank is almost empty. Please refill ASAP. Thank you");// Messsage content
+     delay(800);
+     SIM900A.println((char)26);// ctrl + z
+     delay(800);
+     Serial.println ("Notif owner to refill food tank");
+     delay(10);
+     lcd.clear();
+     lcd.setCursor(0, 0);
+     lcd.print("NOTIF OWNER TO");
+     lcd.setCursor(0, 1);
+     lcd.print("REFILL FOOD TANK");
+     //delay(3000);*/
     }
   }
 
@@ -222,20 +240,6 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   digitalWrite(DispSignal, LOW);
   
   DispMotor.write(0);
-
-/*
-
-  if (Serial.available()>0)
-   switch(Serial.read())
-  {
-    case 's':
-      SendMessage();
-      break;
-  }
-
- if (SIM900A.available()>0)
-   Serial.write(SIM900A.read());
-*/
 
   //Tank Sensor Value checker (TESTER)
   //Serial.println("Tank: " + String((digitalRead(TankSensor))));
@@ -626,7 +630,7 @@ if (Serial.available() > 0) {
       lcd.print("Human Detected!");
       lcd.setCursor(0,1);
       lcd.print("Dispenses Food!");                    
-      delay(800);
+      //delay(800);
       Dispense();
       
 
