@@ -29,6 +29,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   #include <ATtinySerialOut.hpp>
   #include <string.h>
   #include <NewPing.h>
+  
 
 
   // software serial #1: RX = digital pin 0, TX = digital pin 1
@@ -42,7 +43,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   // Essential Variables
   int DispCount = 0; // Food dispensing frequency counter
   // int MaxDisp = 0; // Maximum dispense per feeding interval
-  int CTime = 0; //TENTATIVE- Current time / Last identified "Time"
+  int CTime = 10; //TENTATIVE- Current time / Last identified "Time"
   int ATime = 0; // Time checker for adult / senior
   int PTime = 0; // Time checker for puppy
   int Timer = 0; // For dispense interval (The pause before next dispense)
@@ -58,24 +59,22 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
 
   // Pin Variables
-  const int DispensePin = 2;
+  const int SwitchPin = 2;
   const int PIN_CLK = 3;
-  const int AgePin = 4;
+  const int DogAvail = 4;
   const int PIN_DAT = 5;
   const int PIN_ENA = 6;
   const int ServoPin = 7;
-  const int SwitchPin = 8;
-  const int DogAvail = 9;
-  const int Trig = 10;
-  const int AdultSignalPin = 11;
-  //const int PowerPin = 12; 
-  //const int Echo = 12;
+ /* const int  = 8;
+  const int  = 9;
+  const int  = 10;
+  const int  = 11;*/
   const int TankSensor = 12;
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogPin = A1;
-  const int GSMrx = A2;
-  const int GSMtx = A3;
+  //const int GSMrx = A2;
+  //const int GSMtx = A3;
 
   Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
 
@@ -92,22 +91,25 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
   LiquidCrystal_I2C lcd(0x27,20,4);
 
+  Servo DispMotor;
+
   void setup() {
     // This shit runs once fr fr
   
   //SIM900A.begin(9600);
   Serial.begin(9600);
 
+  //DispMotor.attach(ServoPin);
 
-  pinMode (DispensePin, OUTPUT);
-  pinMode (AgePin, INPUT);
+  //pinMode (DispensePin, OUTPUT);
+  //pinMode (AgePin, INPUT);
   pinMode (DogPin, INPUT);
   pinMode (HumanPin, INPUT);
   pinMode (SwitchPin, INPUT);
   pinMode (DispSignal, OUTPUT);
   //pinMode (PowerPin, OUTPUT);
   pinMode (TankSensor, INPUT);
-  pinMode (AdultSignalPin, OUTPUT);
+  //pinMode (AdultSignalPin, OUTPUT);
   pinMode (DogAvail, OUTPUT);
 
 
@@ -121,14 +123,14 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
     /*          Ds1302::DateTime dt = {
               .year = 23,
-              .month = Ds1302::MONTH_MAY,
-              .day = 27,
-              .hour = 16,
-              .minute = 51,
+              .month = Ds1302::MONTH_JUN,
+              .day = 5,
+              .hour = 15,
+              .minute = 28,
               .second = 0,
-              .dow = Ds1302::DOW_SAT};
+              .dow = Ds1302::DOW_MON};
               rtc.setDateTime(&dt);
-       */
+      */ 
 
   // test if clock is halted and set a date-time (see example 2) to start it
       if (rtc.isHalted())
@@ -176,10 +178,13 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   digitalWrite(DispSignal, HIGH);
   delay(100);
 
+
+  //CheckTank();
+
   }
 
 
-  Servo DispMotor;
+  
 
 
   void CheckTank()
@@ -200,10 +205,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   Ds1302::DateTime now;
   rtc.getDateTime(&now);
   digitalWrite(DispSignal, LOW);
-
-
-  //servomotor setup
-  //DispMotor.attach(ServoPin);
+  
   //DispMotor.write(0);
 
 /*
@@ -220,12 +222,32 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
    Serial.write(SIM900A.read());
 */
 
+  /*/Tank Sensor Value checker (TESTER)
+  Serial.println("Tank: " + String((digitalRead(TankSensor))));
+  delay("500");  
 
-  if (Serial.available()>0)
-    {
-      if (Serial.read() == 'T' || Serial.read() == 't')
-        CheckTank();
+if (Serial.available() > 0) {
+  switch (Serial.read()) {
+    case 'T':
+    case 't':
+      CheckTank();
+      break;
+  }
+}
+*/
+
+
+  //Servo Tester
+  if (Serial.available()>0){
+    switch(Serial.read()){
+      case 's':
+      Serial.println("Servo must rotate now");
+      /*DispMotor.write(180);
+      delay(100);
+      DispMotor.write(0);*/
+      break;
     }
+  }
 
 
   //Age Button clicked or swtiched
@@ -235,7 +257,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
     if (Adult == true)
     {
       Adult = false;
-      digitalWrite(AdultSignalPin, LOW);
+     // digitalWrite(AdultSignalPin, LOW);
       DispCount = 0;
       Timer = 0;
       lcd.clear();
@@ -247,7 +269,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
     else
     {
       Adult = true;
-      digitalWrite(AdultSignalPin, HIGH);
+      //digitalWrite(AdultSignalPin, HIGH);
       DispCount = 0;
       Timer = 0;
       lcd.clear();
@@ -263,7 +285,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   //Time Checker
   if (Adult == true) //ADT Time Checker
   {
-    digitalWrite (AdultSignalPin, HIGH);
+    //digitalWrite (AdultSignalPin, HIGH);
 
     if (now.hour >= 7 && now.hour < 12)
       {
@@ -292,7 +314,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   }
   else //Puppy Time Checker
   {
-    digitalWrite (AdultSignalPin, LOW);
+    //digitalWrite (AdultSignalPin, LOW);
 
     if (now.hour >= 7 && now.hour < 11)
       {
@@ -708,9 +730,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
                 digitalWrite (DogAvail, HIGH);
 
             //fServo Rotation
-            DispMotor.write(180);
+            /*DispMotor.write(180);
             delay(1000);
-            DispMotor.write(0);
+            DispMotor.write(0);*/
 
               //For Serial Display
               for(int i = 0; i < 50; i++) {
