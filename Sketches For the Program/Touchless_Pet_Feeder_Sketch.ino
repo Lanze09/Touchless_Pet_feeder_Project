@@ -2,17 +2,13 @@
 
    
 /*
-
 for LCD, 
-
 VCC and GND connected to the bridge of the longer bread board
 SDA - A4
 SCL - A5
-
 2 pins on the left part
 lower pin - left pin of 10k potentiometer (knob facing you)
 upper pin - middle pin of 10k potentiometer (knob facing you)
-
 */
 
   #include <Arduino.h>
@@ -122,7 +118,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   lcd.setContrast(255); // maximum contrast level
   lcd.backlight();
 
-  DispMotor.attach(ServoPin);
+  //DispMotor.attach(ServoPin);
   DispMotor.write(0);
 
          
@@ -210,7 +206,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
      delay(800);
      SIM900A.println((char)26);// ctrl + z
      delay(800);
-     Serial.println ("Notif owner to refill food tank");
+     Serial.println ("Notif sent owner to refill food tank");
      delay(10);
      lcd.clear();
      lcd.setCursor(0, 0);
@@ -249,13 +245,27 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 //My Fckin Everything Checker
 if (Serial.available() > 0) {
   switch (Serial.read()) {
-    case 'T':
-    case 't':
+    case 'c':
+    case 'C':
       CheckTank();
       break;
-    case 's':
-    case 'S':
+    case 'd':
+    case 'D':
       Dispense();
+      break;
+    case 't':
+    case 'T':
+      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+
+
+              /*.year = 23,
+              .month = Ds1302::MONTH_JUN,
+              .day = 5,
+              .hour = 15,
+              .minute = 28,
+              .second = 0,
+              .dow = Ds1302::DOW_MON};*/
+
       break;
   }
 }
@@ -453,34 +463,6 @@ if (Serial.available() > 0) {
           DispCount = 0;
           digitalWrite (DogAvail, LOW);
           CheckTank();
-
-            lcd.clear();
-            lcd.setCursor(0,0);
-            lcd.print("---TOUCHLESS----");
-            lcd.setCursor(0,1);
-            lcd.print("---PET FEEDER---");
-            delay(3000);
-
-            lcd.clear();
-            lcd.setCursor(0,0);
-            lcd.print("Thesis Prototype");
-            lcd.setCursor(0,1);
-            lcd.print("for CMPE30252");
-            delay(3000);
-
-            digitalWrite(DispSignal, HIGH);
-            delay(200);
-            digitalWrite(DispSignal, LOW);
-            delay(100);
-            digitalWrite(DispSignal, HIGH);
-            delay(200);
-            digitalWrite(DispSignal, LOW);
-            delay(100);
-            digitalWrite(DispSignal, HIGH);
-            delay(200);
-            digitalWrite(DispSignal, LOW);
-            delay(100);
-
         }
       }
 
@@ -535,66 +517,11 @@ if (Serial.available() > 0) {
           Timer = 0;
       }
       
-
-      //For Serial Display per minute
       for(i = 0; i < 50; i++) {
         Serial.println();}
       Serial.println("--------PER MINUTE---------");
-      Serial.println(DayTime);
-      Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
-      Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
-      Serial.print(" | Interval: ");
-      Serial.print(Timer);
-      Serial.println(" Min/s");
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      
-      if (Adult == true)
-      {
-        lcd.print("A INT:" + String(Timer) + "m REM:");
-
-        if ((AdultMax - DispCount) > 0)
-        {
-          lcd.print(String(AdultMax - DispCount));          
-          Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
-        }
-        else
-          {
-            lcd.print("0 ");
-            Serial.print("Remaining for Dog: 0");
-            digitalWrite(DogAvail, LOW);
-          }
-      }
-      else
-      {    
-          lcd.print("P INT:" + String(Timer) + "m REM:");
-
-        if ((PuppyMax - DispCount) > 0)
-        {
-          Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
-          lcd.print(String(PuppyMax - DispCount));
-        }
-        else
-          {
-            Serial.print("Remaining for Puppy: 0");
-            lcd.print("0 ");
-            digitalWrite(DogAvail, LOW);
-          }     
-      }
-      Serial.println(" | " + WillReset);
-      lcd.setCursor(0, 1);
-      lcd.print("                  ");
-      lcd.setCursor(0, 1);
-      lcd.print(Time + " " + WillReset);
-      Serial.println("*** DEVELOPER DATA BELOW ***");
-      Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
-      Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax) + " / now.hour: " + String(now.hour));
-      Serial.println("Hourrr: " + String(Hourrr) + " / DOW: " + String(now.dow));
-      Serial.println("-----------------"); 
+      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
   }
-
-
-
 
 
   //  ------------------- Human Detected ------------------- fhuman
@@ -624,85 +551,22 @@ if (Serial.available() > 0) {
         }
       }
 
-
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Human Detected!");
       lcd.setCursor(0,1);
       lcd.print("Dispenses Food!");                    
       //delay(800);
-      Dispense();
-      
-
-      //fServo Rotation
-      /*DispMotor.write(180);
-      delay(1000);
-      DispMotor.write(0);*/
-
-      //For Serial Display 
-      for(int i = 0; i < 50; i++) {
+      Dispense();      
+      for(int i = 0; i < 50; i++) 
+      {
         Serial.println();}
-      Serial.println("--------HUMAN DETECTED---------");
-      Serial.println(DayTime);
-      Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
-      Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
-      Serial.print(" | Interval: ");
-      Serial.print(Timer);
-      Serial.println(" Min/s");
-      delay(1000);
-      lcd.clear();
-      lcd.setCursor(0, 0);
-
-      if (Adult == true)
-      {
-        lcd.print("A INT:" + String(Timer) + "m REM: ");
-        if ((AdultMax - DispCount) > 0)
-          {
-            Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
-            lcd.print(String(AdultMax - DispCount));
-    //        digitalWrite(DogAvail, HIGH);
-          }
-        else
-          {
-            Serial.print("Remaining for Dog: 0");
-            lcd.print("0");
-            digitalWrite(DogAvail, LOW);
-          }
+        Serial.println("--------HUMAN DETECTED---------");
+        TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
       }
-      else
-      {
-        lcd.print("P INT:" + String(Timer) + "m REM:");
-
-        if ((PuppyMax - DispCount) > 0)
-          {
-            Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
-            lcd.print(String(PuppyMax - DispCount));            
-   //         digitalWrite(DogAvail, HIGH);
-          }
-          
-        else
-          {
-            Serial.print("Remaining for Puppy: 0");
-            lcd.print("0");            
-            digitalWrite(DogAvail, LOW);
-          }     
-      }
-      Serial.println(" | " + WillReset);
-      lcd.setCursor(0, 1);
-      lcd.print(Time + " " + WillReset);
-      Serial.println("*** DEVELOPER DATA BELOW ***");
-      Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
-      Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax) + " / HumanPin: " + String(HumanPin));
-      Serial.println("Dog pin: " + String(DogPin));
-      Serial.println("-----------------");
-    }
     // (Add Command) Set command to close dispenser via servo motor
     delay(300);
   
-
-
-
-
 
   //   ------------------- Dog or Puppy Detected ------------------- fDog
  if (digitalRead(DogPin) != 1)
@@ -733,9 +597,7 @@ if (Serial.available() > 0) {
               delay(800);
               Dispense();
               delay(1000);
-              // (Add Command) Set command to close dispenser via servo motor
               DispCount++;
-              // (Add Command) Set new Timer via RTC Module  
               Timer = TimerDuration;
 
               if (DispCount >= AdultMax || Timer > 0)
@@ -743,37 +605,10 @@ if (Serial.available() > 0) {
               else
                 digitalWrite (DogAvail, HIGH);
 
-              //For Serial Display
               for(int i = 0; i < 50; i++) {
                 Serial.println();}
               Serial.println("--------Doggo Detected---------");
-              Serial.println(DayTime);
-              Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
-              Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
-              Serial.print(" | Interval: ");
-              Serial.print(Timer);
-              Serial.println(" Min/s");
-              lcd.clear();
-              lcd.setCursor(0, 0);
-              lcd.print("A INT:" + String(Timer) + "m REM:");
-              if ((AdultMax - DispCount) > 0)
-              {
-                Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
-                lcd.print(String(AdultMax - DispCount));
-              }
-              else
-              {
-                Serial.print("Remaining for Dog: 0");
-                lcd.print("0");
-              }
-              Serial.println(" | " + WillReset);
-              lcd.setCursor(0, 1);
-              lcd.print(Time + " " + WillReset);
-              Serial.println("*** DEVELOPER DATA BELOW ***");
-              Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
-              Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax) + " / HumanPin: " + String(HumanPin));
-              Serial.println("Dog pin: " + String(DogPin));
-              Serial.println("-----------------");
+              TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
               delay(300);
           }
         }
@@ -792,7 +627,6 @@ if (Serial.available() > 0) {
             if (DispCount < PuppyMax)
             {
               digitalWrite(DispSignal, HIGH);
-              // (Add Command) Set command to open dispenser via servo motor
               lcd.clear();
               lcd.setCursor(0, 0);
               lcd.print("Puppy Detected!");
@@ -800,9 +634,8 @@ if (Serial.available() > 0) {
               lcd.print("Dispenses Food!");              
               delay(800);
               digitalWrite(DispSignal, LOW);
-              Dispense();
+              Dispense(); // Opens dispenser and light up red bulb signal
               delay(1000);
-              // (Add Command) Set command to close dispenser via servo motor
               DispCount++;  
               Timer = TimerDuration;            
 
@@ -814,35 +647,9 @@ if (Serial.available() > 0) {
               //For Serial Display (Puppy)
               for(int i = 0; i < 50; i++) {
                 Serial.println();}
-              Serial.println("---------Puppy DETECTED--------");
-              Serial.println(DayTime);
-              Serial.print(String(now.month) + "/" + String(now.day) + "/" + String(now.year) + " " + DOW + " ");
-              Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
-              Serial.print(" | Interval: ");
-              Serial.print(Timer);
-              Serial.println(" Min/s");
-              lcd.clear();
-              lcd.setCursor(0, 0);
-              lcd.print("P INT:" + String(Timer) + "m REM:");
-              if ((PuppyMax - DispCount) > 0)
-              {
-                Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
-                lcd.print(String(PuppyMax - DispCount));
-              }
-              else
-              {
-                Serial.print("Remaining for Puppy: 0");
-                lcd.print("0");
-              }
-              Serial.println(" | " + WillReset);
-              lcd.setCursor(0, 1);
-              lcd.print(Time + " " + WillReset);
-              Serial.println("*** DEVELOPER DATA BELOW ***");
-              Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
-              Serial.println("Adult: " + String(Adult) + " / Max for Pup: " + String(PuppyMax) + " / Max for Adt: " + String(AdultMax));
-              Serial.println("-----------------");
-
-              delay(300);                          
+                Serial.println("---------Puppy DETECTED--------");
+                TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+                delay(300);                          
             }
           }
         }
@@ -850,23 +657,57 @@ if (Serial.available() > 0) {
     }
   }
 
-/*
+  void TextDisplay(String now_year, String now_month, String now_day, String now_hour, String now_second, String now_dow)
+  {
+      Serial.println(DayTime);
+      Serial.print(now_month + "/" + now_day + "/" + now_year + " " + DOW + " ");
+      Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
+      Serial.print(" | Interval: ");
+      Serial.print(Timer);
+      Serial.println(" Min/s");
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      delay(100);
+      
+      if (Adult == true)
+      {        
+        lcd.print("A INT:" + String(Timer) + "m REM:");
 
-void SendMessage()
-{
-  Serial.println ("Sending Message");
-  SIM900A.println("AT+CMGF=1");    //Sets the GSM Module in Text Mode
-  delay(1000);
-  Serial.println ("Set SMS Number");
-  SIM900A.println("AT+CMGS=\"+639652866745\"\r"); //Mobile phone number to send message
-  delay(1000);
-  Serial.println ("Set SMS Content");
-  SIM900A.println("This is the Arduino speaking. Good Evening.");// Messsage content
-  delay(100);
-  Serial.println ("Finish");
-  SIM900A.println((char)26);// ASCII code of CTRL+Z
-  delay(1000);
-  Serial.println ("Message has been sent");
-}
+        if ((AdultMax - DispCount) > 0)
+        {
+          lcd.print(String(AdultMax - DispCount));          
+          Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
+        }
+        else
+          {
+           // lcd.print("0 ");
+            Serial.print("Remaining for Dog: 0");
+            digitalWrite(DogAvail, LOW);
+          }
+      }
+      else
+      {    
+          lcd.print("P INT:" + String(Timer) + "m REM:");
 
-*/
+        if ((PuppyMax - DispCount) > 0)
+        {
+          Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
+          lcd.print(String(PuppyMax - DispCount));
+        }
+        else
+          {
+            Serial.print("Remaining for Puppy: 0");
+            lcd.print("0 ");
+            digitalWrite(DogAvail, LOW);
+          }     
+      }
+      delay(100);
+      Serial.println(" | " + WillReset);
+      lcd.setCursor(0, 1);
+      lcd.print(Time + " " + WillReset);
+      Serial.println("*** DEVELOPER DATA BELOW ***");
+      Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
+      Serial.println("Adult: " + String(Adult) + " / now.hour: " + now_hour);
+      Serial.println("Hourrr: " + String(Hourrr) + " / DOW: " + now_dow);
+      Serial.println("-----------------");
+  }
