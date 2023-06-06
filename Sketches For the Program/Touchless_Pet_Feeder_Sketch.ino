@@ -1,7 +1,14 @@
-/* ------------------------------- Touchless Pet Feeder ------------------------------- */
+/* ------------------------------- Touchless Pet Feeder -------------------------------
 
-   
-/*
+
++Function for Displays -Servo -GSM
+Desciprtion of the last action: 
+• LCD and Serial Display are good
+• For some reason, Servo starts acting up again all of the sudden even through I haven't changed anything yet from codes and wirings since the last time it was working. I'm thinking that maybe this is due to power insufficiency. Will need to buy 2 more 9V Battery to support Arduino microcontroller + LCD / GSM / Servo motor
+• Same as previous but I made the codes cleaner then the previous
+
+
+------Other Info------
 for LCD, 
 VCC and GND connected to the bridge of the longer bread board
 SDA - A4
@@ -32,13 +39,11 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   SoftwareSerial portOne(0,1);
   // software serial #2: RX = digital pin 7, TX = digital pin 8
   SoftwareSerial portTwo(7,8);
-
   //SoftwareSerial SIM900A(A2,A3);
 
 
   // Essential Variables
   int DispCount = 0; // Food dispensing frequency counter
-  // int MaxDisp = 0; // Maximum dispense per feeding interval
   int CTime = 10; //TENTATIVE- Current time / Last identified "Time"
   int ATime = 0; // Time checker for adult / senior
   int PTime = 0; // Time checker for puppy
@@ -118,7 +123,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   lcd.setContrast(255); // maximum contrast level
   lcd.backlight();
 
-  //DispMotor.attach(ServoPin);
+  DispMotor.attach(ServoPin);
   DispMotor.write(0);
 
          
@@ -133,23 +138,6 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
               .dow = Ds1302::DOW_MON};
               rtc.setDateTime(&dt);
       */ 
-
-  // test if clock is halted and set a date-time (see example 2) to start it
-      if (rtc.isHalted())
-      {
-          Serial.println("RTC is halted. Setting time...");
-
-          Ds1302::DateTime dt = {
-              .year = 23,
-              .month = Ds1302::MONTH_JUN,
-              .day = 9,
-              .hour = 16,
-              .minute = 20,
-              .second = 0,
-              .dow = Ds1302::DOW_FRI
-          };
-          rtc.setDateTime(&dt);
-      }
 
 
   //starting screen
@@ -179,14 +167,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   delay(200);
   digitalWrite(DispSignal, HIGH);
   delay(100);
-
-
-  //CheckTank();
-
   }
-
-
-  
 
 
   void CheckTank()
@@ -256,19 +237,26 @@ if (Serial.available() > 0) {
     case 't':
     case 'T':
       TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
-
-
-              /*.year = 23,
-              .month = Ds1302::MONTH_JUN,
-              .day = 5,
-              .hour = 15,
-              .minute = 28,
-              .second = 0,
-              .dow = Ds1302::DOW_MON};*/
-
       break;
   }
 }
+
+  // test if clock is halted and set a date-time (see example 2) to start it
+      if (rtc.isHalted())
+      {
+          Serial.println("RTC is halted. Setting time...");
+
+          Ds1302::DateTime dt = {
+              .year = 23,
+              .month = Ds1302::MONTH_JUN,
+              .day = 9,
+              .hour = 16,
+              .minute = 20,
+              .second = 0,
+              .dow = Ds1302::DOW_FRI
+          };
+          rtc.setDateTime(&dt);
+      }
 
 
   //Age Button clicked or swtiched
