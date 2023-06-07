@@ -1,11 +1,13 @@
 /* ------------------------------- Touchless Pet Feeder -------------------------------
 
 
-+Function for Displays -Servo -GSM
++Servo +Cleaned_Code -GSM
 Desciprtion of the last action: 
+• Servo is Working again
 • LCD and Serial Display are good
-• For some reason, Servo starts acting up again all of the sudden even through I haven't changed anything yet from codes and wirings since the last time it was working. I'm thinking that maybe this is due to power insufficiency. Will need to buy 2 more 9V Battery to support Arduino microcontroller + LCD / GSM / Servo motor
-• Same as previous but I made the codes cleaner then the previous
+• We already have 2 9v battery
+• Servo has bee connected to the small bread board and it starts working again
+• Fixed some bugs with the remaining display
 
 
 ------Other Info------
@@ -180,7 +182,6 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
      Serial.println("TankSensor: " + String((digitalRead(TankSensor))));    
      /*SIM900A.println("AT+CMGF=1");
      delay(800);
-     Serial.println ("Set SMS Number");
      SIM900A.println("AT+CMGS=\"+639652866745\"\r");
      delay(800);
      SIM900A.println("Hi, your Dog's food tank is almost empty. Please refill ASAP. Thank you");// Messsage content
@@ -668,7 +669,7 @@ if (Serial.available() > 0) {
         }
         else
           {
-           // lcd.print("0 ");
+            lcd.print("0 ");
             Serial.print("Remaining for Dog: 0");
             digitalWrite(DogAvail, LOW);
           }
@@ -694,8 +695,7 @@ if (Serial.available() > 0) {
       lcd.setCursor(0, 1);
       lcd.print(Time + " " + WillReset);
       Serial.println("*** DEVELOPER DATA BELOW ***");
-      Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / Counter: " + String(DispCount));
-      Serial.println("Adult: " + String(Adult) + " / now.hour: " + now_hour);
-      Serial.println("Hourrr: " + String(Hourrr) + " / DOW: " + now_dow);
+      Serial.println("ATime: " + String(ATime) + " / PTime: " + String(PTime) + " / CTime: " + String(CTime));
+      Serial.println("DispCount " + String(DispCount) + " / TankSensor: " + String(digitalRead(TankSensor)));
       Serial.println("-----------------");
   }
