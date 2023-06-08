@@ -3,9 +3,10 @@
 
 +Servo +CheckTank() Displays +Good LCD Display -GSM
 Desciprtion of the last action: 
+• Cleaned codes and made them precise. Was able to lower the dynamic usage to 63%
 • Servo is still Working attached to 5v output of arduino
 • GSM Module connected to network (powered by 9V battery reduced to 5V by Voltage regulator)
-• LCD Display is good. However, Serial display is messed up
+• LCD and Serial display are both working perfectly fine
 
 
 
@@ -19,27 +20,28 @@ lower pin - left pin of 10k potentiometer (knob facing you)
 upper pin - middle pin of 10k potentiometer (knob facing you)
 */
 
+  
+  //#include <stdlib.h>
+  //#include <stdio.h>
+  //#include <Wire.h>
+  //#include <HardwareSerial.h>
+  //#include <HardwareSerial_private.h>
+  //#include <ATtinySerialOut.hpp>
+  //#include <string.h>
   #include <Arduino.h>
-  #include <stdlib.h>
-  #include <stdio.h>
-  #include <Wire.h>
   #include <RTClib.h>
   #include <Ds1302.h>
   #include <LiquidCrystal_I2C.h>
   #include <Servo.h>
   #include <SoftwareSerial.h>
-  #include <HardwareSerial.h>
-  #include <HardwareSerial_private.h>
-  #include <ATtinySerialOut.hpp>
-  #include <string.h>
   #include <NewPing.h>
   
 
 
   // software serial #1: RX = digital pin 0, TX = digital pin 1
-  SoftwareSerial portOne(0,1);
+  //SoftwareSerial portOne(0,1);
   // software serial #2: RX = digital pin 7, TX = digital pin 8
-  SoftwareSerial portTwo(7,8);
+  //SoftwareSerial portTwo(7,8);
   SoftwareSerial SIM900A(A2,A3);
 
 
@@ -50,9 +52,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   int PTime = 0; // Time checker for puppy
   int Timer = 0; // For dispense interval (The pause before next dispense)
   int TCounter = 0;
-  int i;
-  String DayTime = "";
-  String DOW, DayLight, Hourrr, Minuteee, Seconddd, WillReset, Time;
+  String DayLight, Hourrr, Minuteee, Seconddd, WillReset, Time;
 
   //TENTATIVE VALUES
   int TimerDuration = 3; // timer Duration per minute
@@ -91,7 +91,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
       "Sunday"
   };
 
-  LiquidCrystal_I2C lcd(0x27,20,4);
+  LiquidCrystal_I2C lcd(0x27,16,2);
 
   Servo DispMotor;
 
@@ -100,11 +100,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   
   
   Serial.begin(115200);
-  delay(1000);
+  delay(80);
   SIM900A.begin(115200);
-
   
-
   //pinMode (DispensePin, OUTPUT);
   //pinMode (AgePin, INPUT);
   pinMode (DogPin, INPUT);
@@ -112,9 +110,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   pinMode (SwitchPin, INPUT);
   pinMode (DispSignal, OUTPUT);
   pinMode (ServoPin, OUTPUT);
-  //pinMode (PowerPin, OUTPUT);
   pinMode (TankSensor, INPUT);
-  //pinMode (AdultSignalPin, OUTPUT);
   pinMode (DogAvail, OUTPUT);
 
 
@@ -147,14 +143,14 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   lcd.print("---TOUCHLESS----");
   lcd.setCursor(0,1);
   lcd.print("---PET FEEDER---");
-  delay(3000);
+  delay(2000);
 
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("THESIS PROTOTYPE");
   lcd.setCursor(0,1);
   lcd.print(" FOR CMPE30252");
-  delay(3000);
+  delay(2000);
 
   digitalWrite(DispSignal, LOW);
   delay(200);
@@ -180,9 +176,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
     {
      Ds1302::DateTime now;
      rtc.getDateTime(&now);
-     Serial.println("Tank is running out of food, Please refill");
-     delay(10);
-     Serial.println("TankSensor: " + String((digitalRead(TankSensor))));    
+     Serial.println("Tank is running out of food, Needs refill");
+     delay(10); 
      /*SIM900A.println("AT+CMGF=1");
      Serial.println("AT+CMGF=1");
      delay(1000);
@@ -200,14 +195,13 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
      lcd.setCursor(0, 0);
      lcd.print("  NEEDS REFILL");
      delay(3000);
-     TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+     TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
   }
 
   void Dispense()
   {
     digitalWrite(DispSignal, HIGH);
-    Serial.println("Dispenses Food");
     DispMotor.write(180);
     delay(1000);
     DispMotor.write(0);
@@ -221,8 +215,6 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   Ds1302::DateTime now;
   rtc.getDateTime(&now);
   digitalWrite(DispSignal, LOW);
-  
-  DispMotor.write(0);
 
 //My Fckin Everything Checker
 if (Serial.available() > 0) {
@@ -237,7 +229,7 @@ if (Serial.available() > 0) {
       break;
     case 't':
     case 'T':
-      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
       break;
   }
 }
@@ -263,11 +255,10 @@ if (Serial.available() > 0) {
   //Age Button clicked or swtiched
   if (digitalRead(SwitchPin) == 1)
   {
-    Serial.println("Age Switched");    
+    //Serial.println("Age Switched");    
     if (Adult == true)
     {
       Adult = false;
-     // digitalWrite(AdultSignalPin, LOW);
       DispCount = 0;
       Timer = 0;
       lcd.clear();
@@ -300,25 +291,21 @@ if (Serial.available() > 0) {
     if (now.hour >= 7 && now.hour < 12)
       {
         ATime = 0;
-        DayTime = "Morning, Doggo";
         WillReset = "RST@12pm";
       }
     else if (now.hour >= 12 && now.hour < 19)
       {
         ATime = 1;
-        DayTime = "Lunch Time, Doggo";
         WillReset = "RST@7pm";
       }
     else if (now.hour >= 19)
       {
         ATime = 2;
-        DayTime = "Evening, Doggo";
         WillReset = "RST@12am";
       }
     else if (now.hour >= 0 && now.hour < 7)
       {
         ATime = 3;
-        DayTime = "Midnight, Doggo";
         WillReset = "RST@7am";
       }
   }
@@ -329,58 +316,30 @@ if (Serial.available() > 0) {
     if (now.hour >= 7 && now.hour < 11)
       {
         PTime = 0;
-        DayTime = "Early Morning, Puppy";
         WillReset = "RST@11am";
       }
     else if (now.hour >= 11 && now.hour < 15)
       {
         PTime = 1;
-        DayTime = "Lunch Time, Puppy";
         WillReset = "RST@3pm";
       }
     else if (now.hour >= 15 && now.hour < 19)
       {
         PTime = 2;
-        DayTime = "Afternoon, Puppy";
         WillReset = "RST@7pm";
       }
     else if (now.hour >= 19)
       {
         PTime = 3;
-        DayTime = "Evening, Puppy";
         WillReset = "RST@12am";
       }
     else if (now.hour >= 0 && now.hour < 7)
       {
         PTime = 4;
-        DayTime = "Midnight, Puppy";
         WillReset = "RST@7am";
       } 
   } 
 
-/*    //DayTime Change Tester
-    if (Tester <= 0)
-      {
-        ATime++;
-        Tester = 3;
-      }
-*/
-
-    //Day of the week naming
-    if (now.dow == 7)
-      DOW = "SUN";
-    else if (now.dow == 1)
-      DOW = "MON";
-    else if (now.dow == 2)
-      DOW = "TUE";
-    else if (now.dow == 3)
-      DOW = "WED";
-    else if (now.dow == 4)
-      DOW = "THU";
-    else if (now.dow == 5)
-      DOW = "FRI";
-    else if (now.dow == 6)
-      DOW = "SAT";
 
   // Turn time into 12-Hour format
   if (now.hour <= 12)
@@ -506,10 +465,10 @@ if (Serial.available() > 0) {
           Timer = 0;
       }
       
-      for(i = 0; i < 50; i++) {
+      for(int i = 0; i < 10; i++) {
         Serial.println();}
       Serial.println("--------PER MINUTE---------");
-      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
   }
 
 
@@ -547,15 +506,13 @@ if (Serial.available() > 0) {
       lcd.print("Dispenses Food!");                    
       //delay(800);
       Dispense();      
-      for(int i = 0; i < 50; i++) 
+      for(int i = 0; i < 10; i++) 
       {
         Serial.println();}
         Serial.println("--------HUMAN DETECTED---------");
-        TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+        TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
       }
-    // (Add Command) Set command to close dispenser via servo motor
-    delay(300);
-  
+    delay(300);  
 
   //   ------------------- Dog or Puppy Detected ------------------- fDog
  if (digitalRead(DogPin) != 1)
@@ -594,10 +551,10 @@ if (Serial.available() > 0) {
               else
                 digitalWrite (DogAvail, HIGH);
 
-              for(int i = 0; i < 50; i++) {
+              for(int i = 0; i < 10; i++) {
                 Serial.println();}
               Serial.println("--------Doggo Detected---------");
-              TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+              TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
               delay(300);
           }
         }
@@ -634,10 +591,10 @@ if (Serial.available() > 0) {
                 digitalWrite (DogAvail, HIGH);
 
               //For Serial Display (Puppy)
-              for(int i = 0; i < 50; i++) {
+              for(int i = 0; i < 10; i++) {
                 Serial.println();}
                 Serial.println("---------Puppy DETECTED--------");
-                TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
+                TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
                 delay(300);                          
             }
           }
@@ -646,49 +603,33 @@ if (Serial.available() > 0) {
     }
   }
 
-  void TextDisplay(String now_year, String now_month, String now_day, String now_hour, String now_second, String now_dow)
+  void TextDisplay(String now_year, String now_month, String now_day, String now_hour, String now_second)
   {
-      Serial.println(DayTime);
-      Serial.print(now_month + "/" + now_day + "/" + now_year + " " + DOW + " ");
+      Serial.print(now_month + "/" + now_day + "/" + now_year + " ");
       Serial.print(Hourrr + ":" + Minuteee + " " + DayLight);
       Serial.print(" | Interval: ");
       Serial.print(Timer);
       Serial.println(" Min/s");
+      delay(80);
       lcd.clear();
       lcd.setCursor(0, 0);
-      delay(100);
+
       
       if (Adult == true)
       {        
         lcd.print("A INT:" + String(Timer) + "m REM:");
-
-        if ((AdultMax - DispCount) > 0)
-        {
-          lcd.print(String(AdultMax - DispCount));          
-          Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
-        }
-        else
-          {
-            lcd.print("0 ");
-            Serial.print("Remaining for Dog: 0");
-            digitalWrite(DogAvail, LOW);
-          }
+        if (DispCount > AdultMax)
+          DispCount = AdultMax;
+         lcd.print(String(AdultMax - DispCount));          
+        Serial.print("Remaining for Dog: " + String(AdultMax - DispCount));
       }
       else
       {    
-          lcd.print("P INT:" + String(Timer) + "m REM:");
-
-        if ((PuppyMax - DispCount) > 0)
-        {
-          Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
-          lcd.print(String(PuppyMax - DispCount));
-        }
-        else
-          {
-            Serial.print("Remaining for Puppy: 0");
-            lcd.print("0 ");
-            digitalWrite(DogAvail, LOW);
-          }     
+        lcd.print("P INT:" + String(Timer) + "m REM:");
+        if (DispCount > PuppyMax)
+          DispCount = PuppyMax;
+        lcd.print(String(PuppyMax - DispCount));          
+        Serial.print("Remaining for Puppy: " + String(PuppyMax - DispCount));
       }
       delay(100);
       Serial.println(" | " + WillReset);
