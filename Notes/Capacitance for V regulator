@@ -1,0 +1,13 @@
+Capacitance value needed
+
+♦ Bard
+• C1: 10μF
+• C2: 1μF
+
+♦ Chat GPTS
+• C1: Electrolytic capacitor (recommended value: 100μF)
+• C2: Ceramic capacitor (recommended value: 0.1μF)
+
+♦ https://electronics.stackexchange.com/questions/8112/how-do-i-convert-9-v-dc-to-5-v
+• C1: 0.33μF
+• C2: 0.1μF
