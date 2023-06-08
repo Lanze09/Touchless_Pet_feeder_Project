@@ -1,13 +1,12 @@
 /* ------------------------------- Touchless Pet Feeder -------------------------------
 
 
-+Servo +Cleaned_Code -GSM
++Servo +CheckTank() Displays +Good LCD Display -GSM
 Desciprtion of the last action: 
-• Servo is Working again
-• LCD and Serial Display are good
-• We already have 2 9v battery
-• Servo has bee connected to the small bread board and it starts working again
-• Fixed some bugs with the remaining display
+• Servo is still Working attached to 5v output of arduino
+• GSM Module connected to network (powered by 9V battery reduced to 5V by Voltage regulator)
+• LCD Display is good. However, Serial display is messed up
+
 
 
 ------Other Info------
@@ -41,7 +40,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   SoftwareSerial portOne(0,1);
   // software serial #2: RX = digital pin 7, TX = digital pin 8
   SoftwareSerial portTwo(7,8);
-  //SoftwareSerial SIM900A(A2,A3);
+  SoftwareSerial SIM900A(A2,A3);
 
 
   // Essential Variables
@@ -76,8 +75,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogPin = A1;
-  //const int GSMrx = A2;
-  //const int GSMtx = A3;
+  const int GSMrx = A2;
+  const int GSMtx = A3;
 
   Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
 
@@ -101,7 +100,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   
   
   Serial.begin(115200);
-  //SIM900A.begin(115200);
+  delay(1000);
+  SIM900A.begin(115200);
 
   
 
@@ -119,15 +119,14 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
 
   rtc.init(); //Initialize RTC
+  delay(80);
   lcd.init(); // initialize the lcd 
   // left to right - yellow green orange brown
   // Print a message to the LCD.
   lcd.setContrast(255); // maximum contrast level
   lcd.backlight();
-
   DispMotor.attach(ServoPin);
   DispMotor.write(0);
-
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
     /*          Ds1302::DateTime dt = {
@@ -152,9 +151,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print("Thesis Prototype");
+  lcd.print("THESIS PROTOTYPE");
   lcd.setCursor(0,1);
-  lcd.print("for CMPE30252");
+  lcd.print(" FOR CMPE30252");
   delay(3000);
 
   digitalWrite(DispSignal, LOW);
@@ -169,6 +168,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   delay(200);
   digitalWrite(DispSignal, HIGH);
   delay(100);
+
+  //CheckTank();
   }
 
 
@@ -177,25 +178,29 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
     // Tank Sensor stops detecing object
     if (digitalRead(TankSensor) == 1)
     {
+     Ds1302::DateTime now;
+     rtc.getDateTime(&now);
      Serial.println("Tank is running out of food, Please refill");
      delay(10);
      Serial.println("TankSensor: " + String((digitalRead(TankSensor))));    
      /*SIM900A.println("AT+CMGF=1");
-     delay(800);
+     Serial.println("AT+CMGF=1");
+     delay(1000);
      SIM900A.println("AT+CMGS=\"+639652866745\"\r");
-     delay(800);
+     Serial.println("AT+CMGS=\"+639652866745\"\r");
+     delay(1000);
      SIM900A.println("Hi, your Dog's food tank is almost empty. Please refill ASAP. Thank you");// Messsage content
-     delay(800);
+     Serial.println("sending message");
+     delay(1000);
      SIM900A.println((char)26);// ctrl + z
-     delay(800);
+     delay(1000);
      Serial.println ("Notif sent owner to refill food tank");
-     delay(10);
+     delay(10);*/
      lcd.clear();
      lcd.setCursor(0, 0);
-     lcd.print("NOTIF OWNER TO");
-     lcd.setCursor(0, 1);
-     lcd.print("REFILL FOOD TANK");
-     //delay(3000);*/
+     lcd.print("  NEEDS REFILL");
+     delay(3000);
+     TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second), String(now.dow));
     }
   }
 
@@ -218,11 +223,6 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   digitalWrite(DispSignal, LOW);
   
   DispMotor.write(0);
-
-  //Tank Sensor Value checker (TESTER)
-  //Serial.println("Tank: " + String((digitalRead(TankSensor))));
-  //delay("500");  
-
 
 //My Fckin Everything Checker
 if (Serial.available() > 0) {
