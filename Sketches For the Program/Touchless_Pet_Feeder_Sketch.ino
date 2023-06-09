@@ -1,12 +1,12 @@
-/* ------------------------------- Touchless Pet Feeder -------------------------------
+/*------------------------------- Touchless Pet Feeder -------------------------------
 
 
-+GSM +Servo +Good Display for LCD and Serial
+-GSM +Everything else -DogSwitch
 Desciprtion of the last actions: 
-• Cleaned codes and made them precise. Was able to lower the dynamic usage to 63%
-• Servo is still Working attached to 5v output of arduino
-• GSM Module connected to network (powered by 9V battery reduced to 5V by Voltage regulator)
-• LCD and Serial display are both working perfectly fine
+• Changed GSM's RX and TX pin
+• Moved CheckTank() Function after void loop part
+• SIM900A is only connecting to network when powered by stable power supply
+• Still trying to troubleshoot SIM900A's serial communication
 
 
 
@@ -21,13 +21,13 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 */
 
   
-  //#include <stdlib.h>
-  //#include <stdio.h>
-  //#include <Wire.h>
-  //#include <HardwareSerial.h>
-  //#include <HardwareSerial_private.h>
-  //#include <ATtinySerialOut.hpp>
-  //#include <string.h>
+  #include <stdlib.h>
+  #include <stdio.h>
+  #include <Wire.h>
+  #include <HardwareSerial.h>
+  #include <HardwareSerial_private.h>
+  #include <ATtinySerialOut.hpp>
+  #include <string.h>
   #include <Arduino.h>
   #include <RTClib.h>
   #include <Ds1302.h>
@@ -42,7 +42,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   //SoftwareSerial portOne(0,1);
   // software serial #2: RX = digital pin 7, TX = digital pin 8
   //SoftwareSerial portTwo(7,8);
-  SoftwareSerial SIM900A(A2,A3);
+  SoftwareSerial SIM900A(10,11);
 
 
   // Essential Variables
@@ -67,16 +67,14 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   const int PIN_DAT = 5;
   const int PIN_ENA = 6;
   const int ServoPin = 7;
- /* const int  = 8;
+ /*const int  = 8;
   const int  = 9;
-  const int  = 10;
-  const int  = 11;*/
+  const int  = 10; // used for GSM module
+  const int  = 11; // used for GSM module*/
   const int TankSensor = 12;
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogPin = A1;
-  const int GSMrx = A2;
-  const int GSMtx = A3;
 
   Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
 
@@ -98,10 +96,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   void setup() {
     // This shit runs once fr fr
   
-  
-  Serial.begin(115200);
-  delay(80);
   SIM900A.begin(115200);
+  delay(80);
+  Serial.begin(115200);
   
   //pinMode (DispensePin, OUTPUT);
   //pinMode (AgePin, INPUT);
@@ -128,13 +125,13 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
     /*          Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_JUN,
-              .day = 5,
-              .hour = 15,
-              .minute = 28,
+              .day = 10,
+              .hour = 13,
+              .minute = 21,
               .second = 0,
-              .dow = Ds1302::DOW_MON};
-              rtc.setDateTime(&dt);
-      */ 
+              .dow = Ds1302::DOW_FRI};
+              rtc.setDateTime(&dt);*/
+      
 
 
   //starting screen
@@ -166,34 +163,6 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   delay(100);
 
   //CheckTank();
-  }
-
-
-  void CheckTank()
-  {
-    // Tank Sensor stops detecing object
-    if (digitalRead(TankSensor) == 1)
-    {
-     Ds1302::DateTime now;
-     rtc.getDateTime(&now);
-     Serial.println("Tank is running out of food, Needs refill");
-     delay(10); 
-     SIM900A.println("AT+CMGF=1");
-     delay(1000);
-     SIM900A.println("AT+CMGS=\"+639652866745\"\r");
-     delay(1000);
-     SIM900A.println("Hi, your Dog's food tank is almost empty. Please refill ASAP. Thank you");// Messsage content
-     delay(1000);
-     SIM900A.println((char)26);// ctrl + z
-     delay(1000);
-     Serial.println ("Notif sent owner to refill food tank");
-     delay(10);
-     lcd.clear();
-     lcd.setCursor(0, 0);
-     lcd.print("  NEEDS REFILL");
-     delay(3000);
-     TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
-    }
   }
 
   void Dispense()
@@ -229,9 +198,16 @@ if (Serial.available() > 0) {
       TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
       break;
   }
+
+  if (SIM900A.available()>0)
+   Serial.write(SIM900A.read());
+
 }
 
-  // test if clock is halted and set a date-time (see example 2) to start it
+
+
+
+  // test if clock is halted a+nd set a date-time (see example 2) to start it
       if (rtc.isHalted())
       {
           Serial.println("RTC is halted. Setting time...");
@@ -600,6 +576,35 @@ if (Serial.available() > 0) {
     }
   }
 
+
+void CheckTank()
+  {
+    // Tank Sensor stops detecing object
+    if (digitalRead(TankSensor) == 1)
+    {
+     Ds1302::DateTime now;
+     rtc.getDateTime(&now);
+     Serial.println("Tank is running out of food, Needs refill");
+     delay(10); 
+     SIM900A.println("AT+CMGF=1");
+     delay(1000);
+     SIM900A.println("AT+CMGS=\"+639652866745\"\r");
+     delay(1000);
+     SIM900A.println("Hi, Dogfood tank is running low. Please Refill");// Messsage content
+     delay(1000);
+     SIM900A.println((char)26);// ctrl + z
+     delay(1000);
+     Serial.println("Notif sent owner to refill food tank\n");
+     delay(10);
+     lcd.clear();
+     lcd.setCursor(0, 0);
+     lcd.print("  NEEDS REFILL");
+     delay(3000);
+     //TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
+    }
+  }
+
+
   void TextDisplay(String now_year, String now_month, String now_day, String now_hour, String now_second)
   {
       Serial.print(now_month + "/" + now_day + "/" + now_year + " ");
@@ -637,3 +642,5 @@ if (Serial.available() > 0) {
       Serial.println("DispCount " + String(DispCount) + " / TankSensor: " + String(digitalRead(TankSensor)));
       Serial.println("-----------------");
   }
+
+  
