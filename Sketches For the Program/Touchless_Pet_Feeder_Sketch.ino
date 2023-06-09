@@ -1,8 +1,8 @@
 /* ------------------------------- Touchless Pet Feeder -------------------------------
 
 
-+Servo +CheckTank() Displays +Good LCD Display -GSM
-Desciprtion of the last action: 
++GSM +Servo +Good Display for LCD and Serial
+Desciprtion of the last actions: 
 • Cleaned codes and made them precise. Was able to lower the dynamic usage to 63%
 • Servo is still Working attached to 5v output of arduino
 • GSM Module connected to network (powered by 9V battery reduced to 5V by Voltage regulator)
@@ -178,19 +178,16 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
      rtc.getDateTime(&now);
      Serial.println("Tank is running out of food, Needs refill");
      delay(10); 
-     /*SIM900A.println("AT+CMGF=1");
-     Serial.println("AT+CMGF=1");
+     SIM900A.println("AT+CMGF=1");
      delay(1000);
      SIM900A.println("AT+CMGS=\"+639652866745\"\r");
-     Serial.println("AT+CMGS=\"+639652866745\"\r");
      delay(1000);
      SIM900A.println("Hi, your Dog's food tank is almost empty. Please refill ASAP. Thank you");// Messsage content
-     Serial.println("sending message");
      delay(1000);
      SIM900A.println((char)26);// ctrl + z
      delay(1000);
      Serial.println ("Notif sent owner to refill food tank");
-     delay(10);*/
+     delay(10);
      lcd.clear();
      lcd.setCursor(0, 0);
      lcd.print("  NEEDS REFILL");
