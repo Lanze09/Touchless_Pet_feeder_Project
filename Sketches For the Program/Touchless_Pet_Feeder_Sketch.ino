@@ -1,23 +1,50 @@
 /*------------------------------- Touchless Pet Feeder -------------------------------
 
 
--GSM +Everything else -DogSwitch
+-GSM -DogSwitch +Everything else
 Desciprtion of the last actions: 
-• Changed GSM's RX and TX pin
-• Moved CheckTank() Function after void loop part
+• Fixed some pins allocation
+• Needs to replace button with a switch but unable to connect it via pin (needs to solder)
+• Created pending code for using switch on Dog age instead of button
 • SIM900A is only connecting to network when powered by stable power supply
 • Still trying to troubleshoot SIM900A's serial communication
 
-
+Sketch uses 14736 bytes (45%) of program storage space. Maximum is 32256 bytes.
+Global variables use 1428 bytes (69%) of dynamic memory, leaving 620 bytes for local variables. Maximum is 2048 bytes.
 
 ------Other Info------
-for LCD, 
-VCC and GND connected to the bridge of the longer bread board
+Power sources: 
+♦ USB Connection + 9V Battery (Versatile)
+
+"Voltage Distribution"
+♦ 5V Output Supports: 
+• LCD (I2C)
+• DS1302 (RTC MOdule)
+• 2 LED's
+• all GND connections are not connected back to micorcontroller (only connected to each GND's of all the components on 5V output pin)
+
+♦ 3.3V Output Supports:
+• button / swtich
+• 3 IR proximity sensors
+• SG90 (Servo motor)
+• both GND's are connected to the GND's of all components on 3.3 output pin
+
+♦ Another 9V Battery (reduced to 5V output by voltage ragulator)
+• SIM900A (GSM Module)
+
+_____________
+
+"LCD"
 SDA - A4
 SCL - A5
 2 pins on the left part
 lower pin - left pin of 10k potentiometer (knob facing you)
 upper pin - middle pin of 10k potentiometer (knob facing you)
+
+"SIM900A"
+• Once worked with 115200 baud rate
+• Only connects to network when powered by battery with regulated voltage output (currently using 5V)
+• Still no Serial response (Currently using software serial)
 */
 
   
@@ -35,13 +62,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   #include <Servo.h>
   #include <SoftwareSerial.h>
   #include <NewPing.h>
-  
 
 
-  // software serial #1: RX = digital pin 0, TX = digital pin 1
-  //SoftwareSerial portOne(0,1);
-  // software serial #2: RX = digital pin 7, TX = digital pin 8
-  //SoftwareSerial portTwo(7,8);
   SoftwareSerial SIM900A(10,11);
 
 
@@ -52,6 +74,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   int PTime = 0; // Time checker for puppy
   int Timer = 0; // For dispense interval (The pause before next dispense)
   int TCounter = 0;
+  //int CAge; 
   String DayLight, Hourrr, Minuteee, Seconddd, WillReset, Time;
 
   //TENTATIVE VALUES
@@ -59,6 +82,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
+  bool CAge = true;
 
   // Pin Variables
   const int SwitchPin = 2;
@@ -66,15 +90,15 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   const int DogAvail = 4;
   const int PIN_DAT = 5;
   const int PIN_ENA = 6;
-  const int ServoPin = 7;
- /*const int  = 8;
-  const int  = 9;
-  const int  = 10; // used for GSM module
-  const int  = 11; // used for GSM module*/
+  const int ServoPin = 9;  
   const int TankSensor = 12;
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogPin = A1;
+  /*
+  A4 - SDA (LCD)
+  A5 - CSL (LCD)
+  */
 
   Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
 
@@ -132,6 +156,19 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
               .dow = Ds1302::DOW_FRI};
               rtc.setDateTime(&dt);*/
       
+
+  /*
+  if (SwitchPin == 1)
+    {
+      Adult = true;
+      CAge = true;
+    }
+  else
+    {
+      Adult = false;
+      CAge = false;
+    }
+*/
 
 
   //starting screen
@@ -226,12 +263,14 @@ if (Serial.available() > 0) {
 
 
   //Age Button clicked or swtiched
+  //if (digitalRead(SwitchPin) != CAge)
   if (digitalRead(SwitchPin) == 1)
   {
     //Serial.println("Age Switched");    
     if (Adult == true)
     {
       Adult = false;
+      CAge = false;
       DispCount = 0;
       Timer = 0;
       lcd.clear();
@@ -243,7 +282,7 @@ if (Serial.available() > 0) {
     else
     {
       Adult = true;
-      //digitalWrite(AdultSignalPin, HIGH);
+      CAge = true;
       DispCount = 0;
       Timer = 0;
       lcd.clear();
@@ -253,7 +292,7 @@ if (Serial.available() > 0) {
       lcd.print("Resetting now!");
     }
     delay(3000);
-    TCounter++;
+    TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
   }
 
   //Time Checker
