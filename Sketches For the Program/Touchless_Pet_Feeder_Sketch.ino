@@ -1,16 +1,13 @@
 /*------------------------------- Touchless Pet Feeder -------------------------------
 
 
--GSM -DogSwitch +Everything else
++GSM_Working -DogSwitch +Everything else
 Desciprtion of the last actions: 
-• Fixed some pins allocation
-• Needs to replace button with a switch but unable to connect it via pin (needs to solder)
-• Created pending code for using switch on Dog age instead of button
-• SIM900A is only connecting to network when powered by stable power supply
-• Still trying to troubleshoot SIM900A's serial communication
-
-Sketch uses 14736 bytes (45%) of program storage space. Maximum is 32256 bytes.
-Global variables use 1428 bytes (69%) of dynamic memory, leaving 620 bytes for local variables. Maximum is 2048 bytes.
+• Switched to arduino mega
+• Used the same digital pins
+• Connected SIM900A to pin 19 and 18 (GSM_RX - 19 // GSM_TX - 18)
+• Connected SIM900A's GND to ground
+• Everything else stays the same
 
 ------Other Info------
 Power sources: 
@@ -30,7 +27,7 @@ Power sources:
 • both GND's are connected to the GND's of all components on 3.3 output pin
 
 ♦ Another 9V Battery (reduced to 5V output by voltage ragulator)
-• SIM900A (GSM Module)
+• GSM (GSM Module)
 
 _____________
 
@@ -41,7 +38,7 @@ SCL - A5
 lower pin - left pin of 10k potentiometer (knob facing you)
 upper pin - middle pin of 10k potentiometer (knob facing you)
 
-"SIM900A"
+"GSM"
 • Once worked with 115200 baud rate
 • Only connects to network when powered by battery with regulated voltage output (currently using 5V)
 • Still no Serial response (Currently using software serial)
@@ -64,8 +61,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   #include <NewPing.h>
 
 
-  SoftwareSerial SIM900A(10,11);
+  //GSM GSM(10,11);
 
+  #define GSM Serial1
 
   // Essential Variables
   int DispCount = 0; // Food dispensing frequency counter
@@ -120,9 +118,10 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   void setup() {
     // This shit runs once fr fr
   
-  SIM900A.begin(115200);
+  //GSM.begin(115200);
   delay(80);
   Serial.begin(115200);
+  Serial1.begin(115200);
   
   //pinMode (DispensePin, OUTPUT);
   //pinMode (AgePin, INPUT);
@@ -170,6 +169,11 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
     }
 */
 
+
+  GSM.println("AT+CMGF=1");
+  delay(500);
+  GSM.println("AT+CNMI=1,2,0,0,0");
+  delay(500);  
 
   //starting screen
   lcd.clear();
@@ -236,8 +240,8 @@ if (Serial.available() > 0) {
       break;
   }
 
-  if (SIM900A.available()>0)
-   Serial.write(SIM900A.read());
+  if (GSM.available()>0)
+   Serial.write(GSM.read());
 
 }
 
@@ -625,21 +629,19 @@ void CheckTank()
      rtc.getDateTime(&now);
      Serial.println("Tank is running out of food, Needs refill");
      delay(10); 
-     SIM900A.println("AT+CMGF=1");
-     delay(1000);
-     SIM900A.println("AT+CMGS=\"+639652866745\"\r");
-     delay(1000);
-     SIM900A.println("Hi, Dogfood tank is running low. Please Refill");// Messsage content
-     delay(1000);
-     SIM900A.println((char)26);// ctrl + z
-     delay(1000);
+     GSM.println("AT+CMGS=\"+639652866745\"\r");
+     delay(500);
+     GSM.println("Hi, Dogfood tank is running low. Please Refill");// Messsage content
+     delay(500);
+     GSM.println((char)26);// ctrl + z
+     delay(500);
      Serial.println("Notif sent owner to refill food tank\n");
      delay(10);
      lcd.clear();
      lcd.setCursor(0, 0);
      lcd.print("  NEEDS REFILL");
      delay(3000);
-     //TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
+     TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
   }
 
