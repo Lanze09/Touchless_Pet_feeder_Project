@@ -1,8 +1,12 @@
 /*------------------------------- Touchless Pet Feeder -------------------------------
 
 
-+GSM_Working +smsCommand_ToDispense +smsCommand_ToCheckStatus -DogSwitch +Everything else
++UltrasonicSensor +HaltedGSM_Prompt +GSM_Working +smsCommands -DogSwitch
+
 Desciprtion of the last actions: 
+• Changed DogSensor to Ultrasonic Sensor with 12.5cm Distance
+• Added LCD prompt when GSM Communication is Halted
+• Used Hardware Serial1 (RX1, TX1) for Serial communication of GSM
 • User can now command feeder to dispense food via SMS (Tested and Working)
 • User can now send SMS command and feeder will reply the with the dog's meal status (Tested and Working)
 • Sends SMS to user when foodtank running low
@@ -76,9 +80,12 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   int Timer = 0; // For dispense interval (The pause before next dispense)
   int TCounter = 0;
   int rem;
+  int max;
   //int CAge; 
   String DayLight, Hourrr, Minuteee, Seconddd, WillReset, Time, readSMS;
   char FL;
+  long SensorDur; 
+  long SensorDist = 30;
 
 
 
@@ -99,7 +106,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   const int TankSensor = 12;
   const int DispSignal = 13;
   const int HumanPin = A0;
-  const int DogPin = A1;
+  const int DogTrig = A1;
+  const int DogEcho = A2;
   /*
   A4 - SDA (LCD)
   A5 - CSL (LCD)
@@ -132,7 +140,8 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   
   //pinMode (DispensePin, OUTPUT);
   //pinMode (AgePin, INPUT);
-  pinMode (DogPin, INPUT);
+  pinMode (DogTrig, OUTPUT);
+  pinMode (DogEcho, INPUT);
   pinMode (HumanPin, INPUT);
   pinMode (SwitchPin, INPUT);
   pinMode (DispSignal, OUTPUT);
@@ -152,16 +161,16 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   DispMotor.write(0);
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-         /*     Ds1302::DateTime dt = {
+      /*        Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_JUN,
-              .day = 18,
-              .hour = 15,
-              .minute = 24,
+              .day = 19,
+              .hour = 16,
+              .minute = 40,
               .second = 0,
-              .dow = Ds1302::DOW_FRI};
-              rtc.setDateTime(&dt);*/
-      
+              .dow = Ds1302::DOW_MON};
+              rtc.setDateTime(&dt);
+      */
 
   /*
   if (SwitchPin == 1)
@@ -244,7 +253,7 @@ if (Serial.available() > 0) {
     case 't':
     case 'T':
       TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
-    case 'm':
+    case 'x':
     Serial.println("SMS = " + readSMS);
       break;
   }
@@ -256,42 +265,69 @@ if (Serial.available() > 0) {
 if (GSM.available()>0)
   {
     readSMS = FilterSMS();
+    delayMicroseconds(10);
     readSMS = readSMS.substring(2);
     readSMS = readSMS.substring(0, readSMS.length() -2);
     readSMS.toLowerCase();
     Serial.println("readSMS: " + readSMS);
 
-    if ((readSMS == "check") || (readSMS == "c"))
+    if (readSMS == "c")
     {
 
      if (Adult == true)
-      rem = AdultMax - DispCount;
+      {
+        rem = AdultMax - DispCount;
+        max = AdultMax;
+      }
      else
-      rem = PuppyMax - DispCount;
+      {
+        rem = PuppyMax - DispCount;
+        max = PuppyMax;
+      }
      if (rem < 0)
       rem = 0;
-     GSM.println("AT+CMGS=\"+639652866745\"\r");
+     GSM.println("AT+CMGS=\"+639654337341\"\r");
      delay(500);
-     GSM.println("Hi, running timer is " + String(Timer) + "m | Remaining dispense for this Mealtime: " + String(rem) + " | " + WillReset);// Messsage content
+     GSM.println("Hi, feeder's running timer is " + String(Timer) + "m | Remaining dispense for this Mealtime: " + String(rem) + " out of " + String(max) + " | " + WillReset);
      delay(500);
      GSM.println((char)26);// ctrl + z
+     lcd.clear();
+     lcd.setCursor(0, 0);
+     lcd.print(" SMS Command!");
+     lcd.setCursor(0,1);
+     lcd.print("Checked Details");
+     delay(2000);
+     TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
-    else if ((readSMS == "dispense") || (readSMS == "d"))
+    else if (readSMS == "d")
     {
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("SMS Command!");
+      lcd.print(" SMS Command!");
       lcd.setCursor(0,1);
       lcd.print("Dispenses Food!");
-      delay(1000);
+      delay(2000);
       Dispense();
       DispCount++;
       TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
-
+    else
+    {      
+      for (size_t i = 0; i < readSMS.length() - 1; ++i) 
+      {
+        if (readSMS.substring(i, i + 2) == "ii") 
+        {
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("GSM Connection");
+          lcd.setCursor(0,1);
+          lcd.print(" is HALTED!");
+          delay(2000);
+          TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
+        }
+      }
+    }
   }
-
-
 
 
   // test if clock is halted a+nd set a date-time (see example 2) to start it
@@ -310,6 +346,7 @@ if (GSM.available()>0)
           };
           rtc.setDateTime(&dt);
       }
+
 
 
   //Age Button clicked or swtiched
@@ -576,13 +613,22 @@ if (GSM.available()>0)
     delay(300);  
 
   //   ------------------- Dog or Puppy Detected ------------------- fDog
- if (digitalRead(DogPin) != 1)
+
+ digitalWrite(DogTrig, LOW);
+ delayMicroseconds(2);
+ digitalWrite(DogTrig, HIGH);
+ delayMicroseconds(10);
+ digitalWrite(DogTrig, LOW);
+ SensorDur = pulseIn(DogEcho, HIGH);
+ SensorDist = (SensorDur * 0.034 / 2);
+
+ if (SensorDist < 12.5)
   {
   if (Timer <= 0)
     {
     if (Adult == true) //DESC -- If Adult   
     {     
-      if (ATime != 3) // Making sure it's not midnight
+      if (ATime != 3) // Making sure Fit's not midnight
       {
         if (CTime != ATime) //DESC-- Daytime changes. Will reset the DispCount to zero
         {
@@ -674,7 +720,7 @@ void CheckTank()
      rtc.getDateTime(&now);
      Serial.println("Tank is running out of food, Needs refill");
      delay(10); 
-     GSM.println("AT+CMGS=\"+639652866745\"\r");
+     GSM.println("AT+CMGS=\"+639654337341\"\r");
      delay(500);
      GSM.println("Hi, Dogfood tank is running low. Please Refill");// Messsage content
      delay(500);
@@ -693,21 +739,20 @@ void CheckTank()
 
 String FilterSMS()
 {
-  int x=0; // sms character counter
-  String sms = ""; //initialize
-  unsigned long int prv_millis = millis(); //wait initialization
-
+  int x=0;
+  String sms = ""; 
+  unsigned long int prevM = millis(); 
   while(1)
   {
     if(GSM.available() >0)
     {
-      char incoming_sms=GSM.read();
-      sms += incoming_sms; 
-      prv_millis = millis();
+      char incomingText=GSM.read();
+      sms += incomingText; 
+      prevM = millis();
       x++; 
     }
-    unsigned long int new_millis = millis();
-    if((x>0)&&((new_millis - prv_millis)>200)) 
+    unsigned long int newM = millis();
+    if((x>0)&&((newM - prevM)>200)) 
       break;     
   }  
   int m = 1 + sms.lastIndexOf('"');
@@ -750,7 +795,7 @@ String FilterSMS()
       lcd.print(Time + " " + WillReset);
       Serial.println("*** DEVELOPER DATA BELOW ***");
       Serial.println("readSMS: " + readSMS);
-      Serial.println("rem: " + String(rem) + " / DispCount " + String(DispCount) + " / TankSensor: " + String(digitalRead(TankSensor)));
+      Serial.println("SensorDist: " + String(SensorDist) + " / SensorDur " + String(SensorDur) + " / DogEcho: " + String(DogEcho));
       Serial.println("-----------------");
   }
 
