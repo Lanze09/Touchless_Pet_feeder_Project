@@ -1,16 +1,10 @@
-/*------------------------------- Touchless Pet Feeder -------------------------------
+ /*------------------------------- Touchless Pet Feeder -------------------------------
 
 
-+UltrasonicSensor +HaltedGSM_Prompt +GSM_Working +smsCommands -DogSwitch
-
++Everyghing_is_Working +No_More_Pendings
 Desciprtion of the last actions: 
+• Changed the button to SPST rocket switch for feeder mode swtiching
 • Changed DogSensor to Ultrasonic Sensor with 12.5cm Distance
-• Added LCD prompt when GSM Communication is Halted
-• Used Hardware Serial1 (RX1, TX1) for Serial communication of GSM
-• User can now command feeder to dispense food via SMS (Tested and Working)
-• User can now send SMS command and feeder will reply the with the dog's meal status (Tested and Working)
-• Sends SMS to user when foodtank running low
-• Everything else stays the same
 
 ------Other Info------
 
@@ -93,25 +87,21 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   int TimerDuration = 3; // timer Duration per minute
   int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  bool Adult = true; // Switch for dog age (false=Puppy ; true=Adult/Senior)
-  bool CAge = true;
+  bool Adult, CAge; // Switch for dog age (false=Puppy ; true=Adult/Senior)
 
   // Pin Variables
-  const int SwitchPin = 2;
   const int PIN_CLK = 3;
   const int DogAvail = 4;
   const int PIN_DAT = 5;
   const int PIN_ENA = 6;
   const int ServoPin = 9;  
+  const int SwitchPin = 10;
   const int TankSensor = 12;
   const int DispSignal = 13;
   const int HumanPin = A0;
   const int DogTrig = A1;
   const int DogEcho = A2;
-  /*
-  A4 - SDA (LCD)
-  A5 - CSL (LCD)
-  */
+
 
   Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
 
@@ -140,10 +130,10 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   
   //pinMode (DispensePin, OUTPUT);
   //pinMode (AgePin, INPUT);
+  pinMode (SwitchPin, INPUT_PULLUP);
   pinMode (DogTrig, OUTPUT);
   pinMode (DogEcho, INPUT);
   pinMode (HumanPin, INPUT);
-  pinMode (SwitchPin, INPUT);
   pinMode (DispSignal, OUTPUT);
   pinMode (ServoPin, OUTPUT);
   pinMode (TankSensor, INPUT);
@@ -161,19 +151,20 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   DispMotor.write(0);
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-      /*        Ds1302::DateTime dt = {
+     /*         Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_JUN,
               .day = 19,
-              .hour = 16,
-              .minute = 40,
+              .hour = 20,
+              .minute = 37,
               .second = 0,
               .dow = Ds1302::DOW_MON};
               rtc.setDateTime(&dt);
       */
 
-  /*
-  if (SwitchPin == 1)
+
+//checking swtich for adult or puppy
+  if (digitalRead(SwitchPin) == 1)
     {
       Adult = true;
       CAge = true;
@@ -183,7 +174,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
       Adult = false;
       CAge = false;
     }
-*/
+
 
 
   GSM.println("AT+CMGF=1");
@@ -235,6 +226,7 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   void loop() {
     // This shit runs over and over and over again no cap
 
+
   Ds1302::DateTime now;
   rtc.getDateTime(&now);
   digitalWrite(DispSignal, LOW);
@@ -258,6 +250,7 @@ if (Serial.available() > 0) {
       break;
   }
 }
+
 
 
 
@@ -349,26 +342,15 @@ if (GSM.available()>0)
 
 
 
+
   //Age Button clicked or swtiched
   //if (digitalRead(SwitchPin) != CAge)
-  if (digitalRead(SwitchPin) == 1)
-  {
-    //Serial.println("Age Switched");    
+
+Adult = digitalRead(SwitchPin);
+if (Adult != CAge)
+{    
     if (Adult == true)
     {
-      Adult = false;
-      CAge = false;
-      DispCount = 0;
-      Timer = 0;
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("Changed to PUPPY");
-      lcd.setCursor(0, 1);
-      lcd.print("Resetting now!");
-    }
-    else
-    {
-      Adult = true;
       CAge = true;
       DispCount = 0;
       Timer = 0;
@@ -378,9 +360,20 @@ if (GSM.available()>0)
       lcd.setCursor(0, 1);
       lcd.print("Resetting now!");
     }
+    else
+    {
+      CAge = false;
+      DispCount = 0;
+      Timer = 0;
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Changed to Puppy");
+      lcd.setCursor(0, 1);
+      lcd.print("Resetting now!");
+    }
     delay(3000);
     TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
-  }
+}
 
   //Time Checker
   if (Adult == true) //ADT Time Checker
@@ -794,8 +787,8 @@ String FilterSMS()
       lcd.setCursor(0, 1);
       lcd.print(Time + " " + WillReset);
       Serial.println("*** DEVELOPER DATA BELOW ***");
-      Serial.println("readSMS: " + readSMS);
-      Serial.println("SensorDist: " + String(SensorDist) + " / SensorDur " + String(SensorDur) + " / DogEcho: " + String(DogEcho));
+      //Serial.println("readSMS: " + readSMS);
+      Serial.println("SensorDist: " + String(SensorDist) + " / DogEcho: " + String(DogEcho) + " / SwitchPin: " + String(SwitchPin));
       Serial.println("-----------------");
   }
 
