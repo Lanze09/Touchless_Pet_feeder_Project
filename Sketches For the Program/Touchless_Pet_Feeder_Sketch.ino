@@ -3,6 +3,8 @@
 
 +Everyghing_is_Working +No_More_Pendings
 Desciprtion of the last actions: 
+• Re-Wiring done
+• Switched some pins
 • Changed the button to SPST rocket switch for feeder mode swtiching
 • Changed DogSensor to Ultrasonic Sensor with 12.5cm Distance
 
@@ -91,9 +93,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
 
   // Pin Variables
   const int PIN_CLK = 3;
-  const int DogAvail = 4;
-  const int PIN_DAT = 5;
-  const int PIN_ENA = 6;
+  const int PIN_DAT = 4;
+  const int PIN_ENA = 5;
+  const int DogAvail = 6;
   const int ServoPin = 9;  
   const int SwitchPin = 10;
   const int TankSensor = 12;
@@ -151,16 +153,16 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   DispMotor.write(0);
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-     /*         Ds1302::DateTime dt = {
+              Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_JUN,
-              .day = 19,
-              .hour = 20,
-              .minute = 37,
+              .day = 22,
+              .hour = 17,
+              .minute = 25,
               .second = 0,
               .dow = Ds1302::DOW_MON};
               rtc.setDateTime(&dt);
-      */
+      
 
 
 //checking swtich for adult or puppy
