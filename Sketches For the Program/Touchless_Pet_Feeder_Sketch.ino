@@ -1,53 +1,17 @@
  /*------------------------------- Touchless Pet Feeder -------------------------------
 
++Updated Dispense() +Updated_Refill_Display +1Initial_Dispense_Per_MT_Change +All_Components_works
 
-+Everyghing_is_Working +No_More_Pendings
 Desciprtion of the last actions: 
-• Re-Wiring done
-• Switched some pins
-• Changed the button to SPST rocket switch for feeder mode swtiching
-• Changed DogSensor to Ultrasonic Sensor with 12.5cm Distance
-
-------Other Info------
-
-• Connected SIM900A to pin 19 and 18 (GSM_RX - 19 // GSM_TX - 18)
-• Connected SIM900A's GND to ground
-
-Power sources: 
-♦ USB Connection + 9V Battery (Versatile)
-
-"Voltage Distribution"
-♦ 5V Output Supports: 
-• LCD (I2C)
-• DS1302 (RTC MOdule)
-• 2 LED's
-• all GND connections are not connected back to micorcontroller (only connected to each GND's of all the components on 5V output pin)
-
-♦ 3.3V Output Supports:
-• button / swtich
-• 3 IR proximity sensors
-• SG90 (Servo motor)
-• both GND's are connected to the GND's of all components on 3.3 output pin
-
-♦ Another 9V Battery (reduced to 5V output by voltage ragulator)
-• GSM (GSM Module)
-
-_____________
-
-"LCD"
-SDA - A4
-SCL - A5
-2 pins on the left part
-lower pin - left pin of 10k potentiometer (knob facing you)
-upper pin - middle pin of 10k potentiometer (knob facing you)
-
-"GSM"
-• Once worked with 115200 baud rate
-• Only connects to network when powered by battery with regulated voltage output (currently using 5V)
-• Still no Serial response (Currently using software serial)
+• Added command to perform 1 default initial dispense every meal time changes
+• Changed LCD Display "NEEDS REFILL" to "REFILL NOTIF SENT TO OWNER"
+• Reduced the motor open duration to 500 millisecond
+• Updated Dispense() Function to have delay between actions and also increment DispCount automatically
+• Removed unnecessary parts of the code
+• Cleaned the codes into presentable form
+• All components are working
 */
 
-  
   #include <stdlib.h>
   #include <stdio.h>
   #include <Wire.h>
@@ -63,10 +27,13 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   #include <SoftwareSerial.h>
   #include <NewPing.h>
 
-
-  //GSM GSM(10,11);
-
   #define GSM Serial1
+
+  //TENTATIVE VALUES
+  int TimerDuration = 3; // timer Duration per minute
+  int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  bool Adult, CAge; // Switch for dog age (false=Puppy ; true=Adult/Senior)
 
   // Essential Variables
   int DispCount = 0; // Food dispensing frequency counter
@@ -75,21 +42,10 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   int PTime = 0; // Time checker for puppy
   int Timer = 0; // For dispense interval (The pause before next dispense)
   int TCounter = 0;
-  int rem;
-  int max;
-  //int CAge; 
+  int rem, max;
+  long SensorDur, SensorDist; 
+  char FL;  
   String DayLight, Hourrr, Minuteee, Seconddd, WillReset, Time, readSMS;
-  char FL;
-  long SensorDur; 
-  long SensorDist = 30;
-
-
-
-  //TENTATIVE VALUES
-  int TimerDuration = 3; // timer Duration per minute
-  int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  bool Adult, CAge; // Switch for dog age (false=Puppy ; true=Adult/Senior)
 
   // Pin Variables
   const int PIN_CLK = 3;
@@ -104,8 +60,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   const int DogTrig = A1;
   const int DogEcho = A2;
 
-
-  Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); // this one actually works. noice
+  Ds1302 rtc(PIN_ENA, PIN_CLK, PIN_DAT); 
+  LiquidCrystal_I2C lcd(0x27,16,2);
+  Servo DispMotor;
 
   const static char* WeekDays[] =
   {
@@ -118,20 +75,12 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
       "Sunday"
   };
 
-  LiquidCrystal_I2C lcd(0x27,16,2);
-
-  Servo DispMotor;
-
   void setup() {
-    // This shit runs once fr fr
-  
-  //GSM.begin(115200);
-  delay(80);
+    
   Serial.begin(115200);
   Serial1.begin(115200);
+  delay(80);
   
-  //pinMode (DispensePin, OUTPUT);
-  //pinMode (AgePin, INPUT);
   pinMode (SwitchPin, INPUT_PULLUP);
   pinMode (DogTrig, OUTPUT);
   pinMode (DogEcho, INPUT);
@@ -141,19 +90,16 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   pinMode (TankSensor, INPUT);
   pinMode (DogAvail, OUTPUT);
 
-
-  rtc.init(); //Initialize RTC
+  rtc.init(); 
+  lcd.init(); 
   delay(80);
-  lcd.init(); // initialize the lcd 
-  // left to right - yellow green orange brown
-  // Print a message to the LCD.
-  lcd.setContrast(255); // maximum contrast level
+  lcd.setContrast(255); 
   lcd.backlight();
   DispMotor.attach(ServoPin);
   DispMotor.write(0);
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-              Ds1302::DateTime dt = {
+   /*           Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_JUN,
               .day = 22,
@@ -161,11 +107,9 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
               .minute = 25,
               .second = 0,
               .dow = Ds1302::DOW_MON};
-              rtc.setDateTime(&dt);
+              rtc.setDateTime(&dt);*/
       
-
-
-//checking swtich for adult or puppy
+//To check Feeder mode switch: (Adult or Puppy)
   if (digitalRead(SwitchPin) == 1)
     {
       Adult = true;
@@ -211,29 +155,27 @@ upper pin - middle pin of 10k potentiometer (knob facing you)
   delay(200);
   digitalWrite(DispSignal, HIGH);
   delay(100);
-
-  //CheckTank();
   }
 
   void Dispense()
   {
     digitalWrite(DispSignal, HIGH);
+    delay(500);
     DispMotor.write(180);
-    delay(1000);
+    delay(500);
     DispMotor.write(0);
+    delay(800);
     digitalWrite(DispSignal, LOW);
+    DispCount++;
   }
 
-
   void loop() {
-    // This shit runs over and over and over again no cap
-
 
   Ds1302::DateTime now;
   rtc.getDateTime(&now);
   digitalWrite(DispSignal, LOW);
 
-//My Fckin Everything Checker
+//Ultimate Checker
 if (Serial.available() > 0) {
   switch (Serial.read()) {
     case 'c':
@@ -253,10 +195,6 @@ if (Serial.available() > 0) {
   }
 }
 
-
-
-
-
 if (GSM.available()>0)
   {
     readSMS = FilterSMS();
@@ -265,10 +203,8 @@ if (GSM.available()>0)
     readSMS = readSMS.substring(0, readSMS.length() -2);
     readSMS.toLowerCase();
     Serial.println("readSMS: " + readSMS);
-
     if (readSMS == "c")
     {
-
      if (Adult == true)
       {
         rem = AdultMax - DispCount;
@@ -285,7 +221,7 @@ if (GSM.available()>0)
      delay(500);
      GSM.println("Hi, feeder's running timer is " + String(Timer) + "m | Remaining dispense for this Mealtime: " + String(rem) + " out of " + String(max) + " | " + WillReset);
      delay(500);
-     GSM.println((char)26);// ctrl + z
+     GSM.println((char)26);
      lcd.clear();
      lcd.setCursor(0, 0);
      lcd.print(" SMS Command!");
@@ -294,16 +230,15 @@ if (GSM.available()>0)
      delay(2000);
      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
-    else if (readSMS == "d")
+  else if (readSMS == "d")
     {
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print(" SMS Command!");
       lcd.setCursor(0,1);
       lcd.print("Dispenses Food!");
-      delay(2000);
+      delay(1000);
       Dispense();
-      DispCount++;
       TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
     else
@@ -324,8 +259,7 @@ if (GSM.available()>0)
     }
   }
 
-
-  // test if clock is halted a+nd set a date-time (see example 2) to start it
+  // test if clock is halted a+nd set a date-time to my birthday at 4:20pm
       if (rtc.isHalted())
       {
           Serial.println("RTC is halted. Setting time...");
@@ -345,11 +279,10 @@ if (GSM.available()>0)
 
 
 
-  //Age Button clicked or swtiched
-  //if (digitalRead(SwitchPin) != CAge)
+
 
 Adult = digitalRead(SwitchPin);
-if (Adult != CAge)
+if (Adult != CAge) //When feeder mode has been switched
 {    
     if (Adult == true)
     {
@@ -380,8 +313,6 @@ if (Adult != CAge)
   //Time Checker
   if (Adult == true) //ADT Time Checker
   {
-    //digitalWrite (AdultSignalPin, HIGH);
-
     if (now.hour >= 7 && now.hour < 12)
       {
         ATime = 0;
@@ -405,8 +336,6 @@ if (Adult != CAge)
   }
   else //Puppy Time Checker
   {
-    //digitalWrite (AdultSignalPin, LOW);
-
     if (now.hour >= 7 && now.hour < 11)
       {
         PTime = 0;
@@ -434,9 +363,8 @@ if (Adult != CAge)
       } 
   } 
 
-
   // Turn time into 12-Hour format
-  if (now.hour <= 12)
+  if (now.hour <= 12) //for AM
     {
       Hourrr = String(now.hour);
       DayLight = "AM";
@@ -445,13 +373,13 @@ if (Adult != CAge)
       if (now.hour == 12) 
         DayLight = "PM";
     }
-  else
+  else //for PM
     {
      Hourrr = String(now.hour - 12);
      DayLight = "PM";
     }
 
-  //Make the time 2 digits if below 10
+  //Make hour 2 digits if below 10
   if (Hourrr.toInt() < 10)
     Hourrr = ("0" + Hourrr);
   else
@@ -465,13 +393,14 @@ if (Adult != CAge)
   else
     Seconddd = String(now.second);
 
+  Time = (Hourrr + ":" + Minuteee + DayLight);
 
     // To ping if maximum dispense has been reached
     if (Adult == true)
     {
       if (DispCount >= AdultMax)
         {
-          digitalWrite (DogAvail, LOW);
+        digitalWrite (DogAvail, LOW);
         }
       else
         digitalWrite (DogAvail, HIGH);
@@ -486,25 +415,27 @@ if (Adult != CAge)
         digitalWrite (DogAvail, HIGH);
     }
 
-      // Reset if Daytime changes
+      // Reset if Meal Time changes
       if (Adult == true)
       {
-        if (CTime != ATime) //DESC-- Daytime changes. Will reset the DispCount to zero
+        if (CTime != ATime) //Meal time changes. Will reset the DispCount to zero
         {
           CTime = ATime;
           DispCount = 0;
           digitalWrite (DogAvail, HIGH);
           CheckTank();
+          Dispense();
         }
       }
       else
       {
-        if (CTime != PTime) //DESC-- Daytime changes. Will reset the DispCount to zero
+        if (CTime != PTime) //Meal time changes. Will reset the DispCount to zero
         {
           CTime = PTime;
           DispCount = 0;
           digitalWrite (DogAvail, LOW);
           CheckTank();
+          Dispense();
         }
       }
 
@@ -544,8 +475,6 @@ if (Adult != CAge)
     }
 
 
-  Time = (Hourrr + ":" + Minuteee + DayLight);
-
   ////  ------------------- Per minute actions ------------------- fminute fperminute
   if (TCounter != now.minute)
     {
@@ -556,8 +485,7 @@ if (Adult != CAge)
         digitalWrite(DogAvail, LOW);
         if (Timer < 0)
           Timer = 0;
-      }
-      
+      }      
       for(int i = 0; i < 10; i++) {
         Serial.println();}
       Serial.println("--------PER MINUTE---------");
@@ -568,16 +496,12 @@ if (Adult != CAge)
   //  ------------------- Human Detected ------------------- fhuman
   if (digitalRead(HumanPin) != 1)
   {
-    // (Add Command) Set command to open dispenser via servo motor
-    DispCount++;
-      // Reset if Daytime changes
       if (Adult == 1)
       {
         if (CTime != ATime) //DESC-- Daytime changes. Will reset the DispCount to zero
         {
           CTime = ATime;
           DispCount = 0;
-          CheckTank();
           digitalWrite (DogAvail, HIGH);
         }
       }
@@ -587,7 +511,6 @@ if (Adult != CAge)
         {
           CTime = PTime;
           DispCount = 0;
-          CheckTank();
           digitalWrite (DogAvail, HIGH);
         }
       }
@@ -597,8 +520,7 @@ if (Adult != CAge)
       lcd.print("Human Detected!");
       lcd.setCursor(0,1);
       lcd.print("Dispenses Food!");                    
-      //delay(800);
-      Dispense();      
+      Dispense();  
       for(int i = 0; i < 10; i++) 
       {
         Serial.println();}
@@ -607,8 +529,8 @@ if (Adult != CAge)
       }
     delay(300);  
 
-  //   ------------------- Dog or Puppy Detected ------------------- fDog
 
+//Sends ultrasonic pulse
  digitalWrite(DogTrig, LOW);
  delayMicroseconds(2);
  digitalWrite(DogTrig, HIGH);
@@ -617,15 +539,16 @@ if (Adult != CAge)
  SensorDur = pulseIn(DogEcho, HIGH);
  SensorDist = (SensorDur * 0.034 / 2);
 
+  //   ------------------- Dog or Puppy Detected ------------------- fDog
  if (SensorDist < 12.5)
   {
   if (Timer <= 0)
     {
-    if (Adult == true) //DESC -- If Adult   
+    if (Adult == true) 
     {     
-      if (ATime != 3) // Making sure Fit's not midnight
+      if (ATime != 3) 
       {
-        if (CTime != ATime) //DESC-- Daytime changes. Will reset the DispCount to zero
+        if (CTime != ATime) //Meal time changes. Will reset the DispCount to zero
         {
         CTime = ATime;
         DispCount = 0;
@@ -635,19 +558,16 @@ if (Adult != CAge)
         
         if (DispCount < AdultMax)
           {
-              // (Add Command) Set command to open dispenser via servo motor
               lcd.clear();
               lcd.setCursor(0, 0);
               lcd.print("Dog Detected!");
               lcd.setCursor(0,1);
               lcd.print("Dispenses Food!");                            
               digitalWrite(DispSignal, LOW);
-              delay(800);
               Dispense();
-              delay(1000);
-              DispCount++;
               Timer = TimerDuration;
 
+              //Setting DogAvail LED
               if (DispCount >= AdultMax || Timer > 0)
                 digitalWrite(DogAvail, LOW);
               else
@@ -662,11 +582,11 @@ if (Adult != CAge)
         }
       }
 
-      else //DESC-- not adult
+      else //Not adult
         {
           if (PTime != 4)
           {
-            if (CTime != PTime) //DESC-- Daytime changes. Will reset the DispCount to zero
+            if (CTime != PTime) //Meal time changes. Will reset the DispCount to zero
             {
             CTime = PTime;
             DispCount = 0;
@@ -674,17 +594,13 @@ if (Adult != CAge)
             }
             if (DispCount < PuppyMax)
             {
-              digitalWrite(DispSignal, HIGH);
               lcd.clear();
               lcd.setCursor(0, 0);
               lcd.print("Puppy Detected!");
               lcd.setCursor(0,1);
               lcd.print("Dispenses Food!");              
-              delay(800);
               digitalWrite(DispSignal, LOW);
-              Dispense(); // Opens dispenser and light up red bulb signal
-              delay(1000);
-              DispCount++;  
+              Dispense();
               Timer = TimerDuration;            
 
               if (DispCount >= PuppyMax || Timer > 0)
@@ -719,18 +635,19 @@ void CheckTank()
      delay(500);
      GSM.println("Hi, Dogfood tank is running low. Please Refill");// Messsage content
      delay(500);
-     GSM.println((char)26);// ctrl + z
+     GSM.println((char)26);
      delay(500);
      Serial.println("Notif sent owner to refill food tank\n");
      delay(10);
      lcd.clear();
      lcd.setCursor(0, 0);
-     lcd.print("  NEEDS REFILL");
+     lcd.print(" REFILL NOTIF");
+     lcd.setCursor(0,1);
+     lcd.print("SENT TO OWNER");              
      delay(3000);
      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
   }
-
 
 String FilterSMS()
 {
@@ -755,7 +672,6 @@ String FilterSMS()
   return(sms.substring(m,n)); 
 }
 
-
   void TextDisplay(String now_year, String now_month, String now_day, String now_hour, String now_second)
   {
       Serial.print(now_month + "/" + now_day + "/" + now_year + " ");
@@ -765,9 +681,7 @@ String FilterSMS()
       Serial.println(" Min/s");
       delay(80);
       lcd.clear();
-      lcd.setCursor(0, 0);
-
-      
+      lcd.setCursor(0, 0);      
       if (Adult == true)
       {        
         lcd.print("A INT:" + String(Timer) + "m REM:");
@@ -793,4 +707,3 @@ String FilterSMS()
       Serial.println("SensorDist: " + String(SensorDist) + " / DogEcho: " + String(DogEcho) + " / SwitchPin: " + String(SwitchPin));
       Serial.println("-----------------");
   }
-
