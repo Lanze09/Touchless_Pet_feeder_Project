@@ -159,6 +159,8 @@ Desciprtion of the last actions:
 
   void Dispense()
   {
+    Ds1302::DateTime now;
+    rtc.getDateTime(&now);
     digitalWrite(DispSignal, HIGH);
     delay(500);
     DispMotor.write(180);
@@ -167,6 +169,7 @@ Desciprtion of the last actions:
     delay(800);
     digitalWrite(DispSignal, LOW);
     DispCount++;
+    TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
   }
 
   void loop() {
@@ -424,6 +427,11 @@ if (Adult != CAge) //When feeder mode has been switched
           DispCount = 0;
           digitalWrite (DogAvail, HIGH);
           CheckTank();
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print(" Initial Time!");
+          lcd.setCursor(0,1);
+          lcd.print("Dispenses Food!");
           Dispense();
         }
       }
@@ -435,6 +443,11 @@ if (Adult != CAge) //When feeder mode has been switched
           DispCount = 0;
           digitalWrite (DogAvail, LOW);
           CheckTank();
+          lcd.clear();
+          lcd.setCursor(0,0);
+          lcd.print(" Initial Time!");
+          lcd.setCursor(0,1);
+          lcd.print("Dispenses Food!");
           Dispense();
         }
       }
