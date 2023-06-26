@@ -1,0 +1,45 @@
+> LCD
+VCC - LRed - LRed - 5V2
+GND - LBlue - LBlack - GND2
+SDA - LPurple - LPurple - ASDA
+SCL - LBrown - LBrown - ASCL
+
+> RTC Module
+VCC - SRed - 5V2
+GND - SBlue - GND2
+CLK - SPurple - D3
+DAT - SWhite - D4
+RST - SBlack - D5
+
+> Human IR Sensor
+VCC - LRed - LOrange - V51
+GND - LBlue - LBlue - GND1
+OUT - LYellow - A0
+
+> Tank IR Sensor
+VCC - LRed - SRed - SRed - 5V1
+GND - LBlue - LPurple - GND1
+OUT - LOrange - LOrange - D12
+
+> Rocket Switch
+OUT - LGreen - LGreen - SGreen - D10 
+GND -  LBlue - LPurple - SGray - GND2
+
+> Servo SG90
+VCC - SRed - 5V1
+GND - SBlue - GND1
+OUT - SYellow - SPurple - D9
+
+> Dog Ultrasonic Sensor
+VCC - LREd - SOrange - 5V1
+TRIG - LGreen - SWhite - A1
+ECHO - LYellow - SYellow - A2
+GND - LBlue - SPurple - GND1
+
+> DogAvail LED
+Anode - 220Ω resistor - SOrange - LOrange - D6
+Cathode - LBlue - LBlack - GND2
+
+> Dispense LED
+Anode - 220Ω resistor - SWhite - LWhite - D13
+Cathode - SBlue - LPurple - SBlue - GND2
