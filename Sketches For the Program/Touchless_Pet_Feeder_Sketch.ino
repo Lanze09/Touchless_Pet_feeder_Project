@@ -1,14 +1,14 @@
  /*------------------------------- Touchless Pet Feeder -------------------------------
 
-+Updated Dispense() +Updated_Refill_Display +1Initial_Dispense_Per_MT_Change +All_Components_works
++GSM_Works +All_Components_works
 
 Desciprtion of the last actions: 
+
+• GSM module reconfigured and started working again for all functions
+• Added serial command "r" for drain
 • Added command to perform 1 default initial dispense every meal time changes
 • Changed LCD Display "NEEDS REFILL" to "REFILL NOTIF SENT TO OWNER"
 • Reduced the motor open duration to 500 millisecond
-• Updated Dispense() Function to have delay between actions and also increment DispCount automatically
-• Removed unnecessary parts of the code
-• Cleaned the codes into presentable form
 • All components are working
 */
 
@@ -30,9 +30,9 @@ Desciprtion of the last actions:
   #define GSM Serial1
 
   //TENTATIVE VALUES
-  int TimerDuration = 3; // timer Duration per minute
-  int PuppyMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  int AdultMax = 10; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int TimerDuration = 15; // timer Duration per minute
+  int PuppyMax = 2; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int AdultMax = 4; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   bool Adult, CAge; // Switch for dog age (false=Puppy ; true=Adult/Senior)
 
   // Essential Variables
@@ -78,6 +78,7 @@ Desciprtion of the last actions:
   void setup() {
     
   Serial.begin(115200);
+  delay(80);
   Serial1.begin(115200);
   delay(80);
   
@@ -99,12 +100,12 @@ Desciprtion of the last actions:
   DispMotor.write(0);
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-   /*           Ds1302::DateTime dt = {
+      /*        Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_JUN,
-              .day = 22,
-              .hour = 17,
-              .minute = 25,
+              .day = 27,
+              .hour = 6,
+              .minute = 13,
               .second = 0,
               .dow = Ds1302::DOW_MON};
               rtc.setDateTime(&dt);*/
@@ -164,7 +165,7 @@ Desciprtion of the last actions:
     digitalWrite(DispSignal, HIGH);
     delay(500);
     DispMotor.write(180);
-    delay(500);
+    delay(200);
     DispMotor.write(0);
     delay(800);
     digitalWrite(DispSignal, LOW);
@@ -194,7 +195,13 @@ if (Serial.available() > 0) {
       TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     case 'x':
     Serial.println("SMS = " + readSMS);
+    Serial.println("Raw Data Received: " + String(GSM.read()));
       break;
+    case 'r':
+    DispMotor.write(180);
+    delay(10000);
+    DispMotor.write(0);
+    break;
   }
 }
 
@@ -530,7 +537,7 @@ if (Adult != CAge) //When feeder mode has been switched
 
       lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("Human Detected!");
+      lcd.print("Owner Detected!");
       lcd.setCursor(0,1);
       lcd.print("Dispenses Food!");                    
       Dispense();  
@@ -553,7 +560,7 @@ if (Adult != CAge) //When feeder mode has been switched
  SensorDist = (SensorDur * 0.034 / 2);
 
   //   ------------------- Dog or Puppy Detected ------------------- fDog
- if (SensorDist < 12.5)
+ if (SensorDist < 30)
   {
   if (Timer <= 0)
     {
@@ -717,6 +724,6 @@ String FilterSMS()
       lcd.print(Time + " " + WillReset);
       Serial.println("*** DEVELOPER DATA BELOW ***");
       //Serial.println("readSMS: " + readSMS);
-      Serial.println("SensorDist: " + String(SensorDist) + " / DogEcho: " + String(DogEcho) + " / SwitchPin: " + String(SwitchPin));
+      Serial.println("HumanPin: " + String((digitalRead(HumanPin))) + " / DogEcho: " + String(DogEcho) + " / SwitchPin: " + String(SwitchPin));
       Serial.println("-----------------");
   }
