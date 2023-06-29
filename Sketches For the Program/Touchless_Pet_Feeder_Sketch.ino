@@ -1,14 +1,15 @@
  /*------------------------------- Touchless Pet Feeder -------------------------------
 
-+GSM_Works +All_Components_works
+Everything works. Nothing to add or change
 
 Desciprtion of the last actions: 
 
-• GSM module reconfigured and started working again for all functions
-• Added serial command "r" for drain
 • Added command to perform 1 default initial dispense every meal time changes
 • Changed LCD Display "NEEDS REFILL" to "REFILL NOTIF SENT TO OWNER"
 • Reduced the motor open duration to 500 millisecond
+• Updated Dispense() Function to have delay between actions and also increment DispCount automatically
+• Removed unnecessary parts of the code
+• Cleaned the codes into presentable form
 • All components are working
 */
 
@@ -30,9 +31,9 @@ Desciprtion of the last actions:
   #define GSM Serial1
 
   //TENTATIVE VALUES
-  int TimerDuration = 15; // timer Duration per minute
-  int PuppyMax = 2; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
-  int AdultMax = 4; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int TimerDuration = 3; // timer Duration per minute
+  int PuppyMax = 3; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
+  int AdultMax = 5; // Change the value to average number of dispense to complete the enough amount of meal for the daytime
   bool Adult, CAge; // Switch for dog age (false=Puppy ; true=Adult/Senior)
 
   // Essential Variables
@@ -100,12 +101,12 @@ Desciprtion of the last actions:
   DispMotor.write(0);
          
           // ------------------------------ Use this to reprogram RTC Module ------------------------------
-      /*        Ds1302::DateTime dt = {
+  /*            Ds1302::DateTime dt = {
               .year = 23,
               .month = Ds1302::MONTH_JUN,
               .day = 27,
-              .hour = 6,
-              .minute = 13,
+              .hour = 4,
+              .minute = 21,
               .second = 0,
               .dow = Ds1302::DOW_MON};
               rtc.setDateTime(&dt);*/
@@ -165,7 +166,7 @@ Desciprtion of the last actions:
     digitalWrite(DispSignal, HIGH);
     delay(500);
     DispMotor.write(180);
-    delay(200);
+    delay(150);
     DispMotor.write(0);
     delay(800);
     digitalWrite(DispSignal, LOW);
@@ -201,6 +202,9 @@ if (Serial.available() > 0) {
     DispMotor.write(180);
     delay(10000);
     DispMotor.write(0);
+    break;
+    case 'g':
+    SensorDist = 15;
     break;
   }
 }
@@ -251,6 +255,17 @@ if (GSM.available()>0)
       Dispense();
       TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
     }
+  else if (readSMS == "n")
+    {
+      DispMotor.write(180);
+      lcd.setCursor(0, 0);
+      lcd.print(" SMS Command!");
+      lcd.setCursor(0,1);
+      lcd.print(" For Draining!");
+      delay(10000);
+      DispMotor.write(0);
+      TextDisplay(String(now.year), String(now.month), String(now.day), String(now.hour), String(now.second));
+    }
     else
     {      
       for (size_t i = 0; i < readSMS.length() - 1; ++i) 
@@ -285,10 +300,6 @@ if (GSM.available()>0)
           };
           rtc.setDateTime(&dt);
       }
-
-
-
-
 
 
 Adult = digitalRead(SwitchPin);
@@ -440,6 +451,7 @@ if (Adult != CAge) //When feeder mode has been switched
           lcd.setCursor(0,1);
           lcd.print("Dispenses Food!");
           Dispense();
+          delay(50);
         }
       }
       else
@@ -456,6 +468,7 @@ if (Adult != CAge) //When feeder mode has been switched
           lcd.setCursor(0,1);
           lcd.print("Dispenses Food!");
           Dispense();
+          delay(50);
         }
       }
 
